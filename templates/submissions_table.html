@@ -1,0 +1,1304 @@
+{% extends "layouts/base.html" %}
+
+{% block body %}
+
+<style>
+    :root {
+        --bg-primary: #0a0e27;
+        --accent-cyan: #00d9ff;
+        --accent-purple: #cb5eee;
+        --accent-orange: #ff6b35;
+        --text-primary: #e4e4e7;
+        --text-secondary: #a1a1a6;
+        --glow-cyan: rgba(0, 217, 255, 0.3);
+        --glow-purple: rgba(203, 94, 238, 0.3);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    html, body {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #0a0e27 0%, #1a1a3e 50%, #0f0f2e 100%);
+        background-attachment: fixed;
+        font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+        color: var(--text-primary);
+        overflow-x: hidden;
+    }
+
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            radial-gradient(circle at 20% 50%, rgba(0, 217, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(203, 94, 238, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: 0;
+        animation: gradientShift 8s ease-in-out infinite;
+    }
+
+    @keyframes gradientShift {
+        0%, 100% {
+            filter: brightness(1);
+        }
+        50% {
+            filter: brightness(1.1);
+        }
+    }
+
+    .container {
+        position: relative;
+        z-index: 1;
+        background: transparent !important;
+        padding: 0 !important;
+    }
+
+    .submissions-wrapper {
+        width: 100%;
+        min-height: 100vh;
+        padding: 40px 40px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 50px;
+        position: relative;
+    }
+
+    .header h1 {
+        font-size: 48px;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -1px;
+        text-shadow: 0 0 30px var(--glow-cyan);
+        filter: drop-shadow(0 0 20px var(--glow-cyan));
+    }
+
+    .tabs-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 40px;
+        border-bottom: 2px solid rgba(0, 217, 255, 0.1);
+        padding-bottom: 0;
+        position: relative;
+    }
+
+    .tab-button {
+        padding: 16px 24px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 2px solid transparent;
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 12px 12px 0 0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .tab-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .tab-button:hover {
+        color: var(--accent-cyan);
+        border-color: rgba(0, 217, 255, 0.3);
+        background: rgba(0, 217, 255, 0.05);
+    }
+
+    .tab-button.active {
+        color: var(--accent-cyan);
+        border-color: var(--accent-cyan);
+        background: rgba(0, 217, 255, 0.1);
+        box-shadow: 0 0 20px var(--glow-cyan), inset 0 0 20px var(--glow-cyan);
+    }
+
+    .tab-content {
+        display: none;
+        animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Table Styling */
+    .table-wrapper {
+        background: rgba(26, 26, 62, 0.4);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(0, 217, 255, 0.1);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 0 40px rgba(0, 217, 255, 0.1), inset 0 0 40px rgba(0, 217, 255, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .table-wrapper:hover {
+        border-color: rgba(0, 217, 255, 0.2);
+        box-shadow: 0 0 50px rgba(0, 217, 255, 0.15), inset 0 0 50px rgba(0, 217, 255, 0.08);
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    .table thead {
+        background: linear-gradient(90deg, rgba(0, 217, 255, 0.1), rgba(203, 94, 238, 0.1));
+        border-bottom: 2px solid rgba(0, 217, 255, 0.2);
+    }
+
+    .table th {
+        padding: 16px 20px;
+        text-align: left;
+        color: var(--accent-cyan);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 1.2px;
+    }
+
+    .table td {
+        padding: 14px 20px;
+        border-bottom: 1px solid rgba(0, 217, 255, 0.05);
+        color: var(--text-primary);
+    }
+
+    .table tbody tr {
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .table tbody tr::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.05), transparent);
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    .table tbody tr:hover {
+        background: rgba(0, 217, 255, 0.1);
+    }
+
+    .table tbody tr:hover::before {
+        opacity: 1;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(10px);
+        border: 1px solid;
+    }
+
+    .badge-community { background: rgba(255, 192, 61, 0.15); color: #ffc03d; border-color: rgba(255, 192, 61, 0.3); }
+    .badge-volunteer { background: rgba(255, 152, 118, 0.15); color: #ff9876; border-color: rgba(255, 152, 118, 0.3); }
+    .badge-charity { background: rgba(167, 139, 250, 0.15); color: #a78bfa; border-color: rgba(167, 139, 250, 0.3); }
+    .badge-environmental { background: rgba(52, 211, 153, 0.15); color: #34d399; border-color: rgba(52, 211, 153, 0.3); }
+    .badge-mentoring { background: rgba(96, 165, 250, 0.15); color: #60a5fa; border-color: rgba(96, 165, 250, 0.3); }
+    .badge-fundraising { background: rgba(236, 72, 153, 0.15); color: #ec4899; border-color: rgba(236, 72, 153, 0.3); }
+    .badge-cleanup { background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: rgba(16, 185, 129, 0.3); }
+    .badge-donation { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border-color: rgba(251, 191, 36, 0.3); }
+    .badge-support { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border-color: rgba(139, 92, 246, 0.3); }
+    .badge-misc { background: rgba(107, 114, 128, 0.15); color: #9ca3af; border-color: rgba(107, 114, 128, 0.3); }
+
+    .btn {
+        padding: 8px 14px;
+        border: 2px solid;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 2px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        transition: left 0.3s;
+        z-index: -1;
+    }
+
+    .btn:hover::before {
+        left: 100%;
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        color: white;
+        border-color: var(--accent-cyan);
+    }
+
+    .btn-view:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 20px var(--glow-cyan);
+    }
+
+    .btn-delete {
+        background: rgba(255, 107, 107, 0.2);
+        color: #ff6b6b;
+        border-color: #ff6b6b;
+    }
+
+    .btn-delete:hover {
+        background: rgba(255, 107, 107, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+    }
+
+    /* Images Grid */
+    .images-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 24px;
+    }
+
+    .image-card {
+        background: rgba(26, 26, 62, 0.4);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(0, 217, 255, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+    }
+
+    .image-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(203, 94, 238, 0.2));
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 1;
+    }
+
+    .image-card:hover {
+        border-color: var(--accent-cyan);
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px var(--glow-cyan), 0 0 30px var(--glow-cyan);
+    }
+
+    .image-card:hover::before {
+        opacity: 1;
+    }
+
+    .image-card-img {
+        width: 100%;
+        height: 160px;
+        object-fit: cover;
+        background: linear-gradient(135deg, rgba(0, 217, 255, 0.05), rgba(203, 94, 238, 0.05));
+    }
+
+    .image-card-info {
+        padding: 16px;
+        border-top: 1px solid rgba(0, 217, 255, 0.1);
+        position: relative;
+        z-index: 2;
+    }
+
+    .image-card-id {
+        font-size: 11px;
+        color: var(--accent-cyan);
+        margin-bottom: 6px;
+        font-weight: 600;
+    }
+
+    .image-card-filename {
+        font-size: 13px;
+        color: var(--text-primary);
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .no-images {
+        text-align: center;
+        padding: 80px 40px;
+        color: var(--text-secondary);
+        font-size: 16px;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+    }
+
+    .stat-card {
+        background: rgba(26, 26, 62, 0.4);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(0, 217, 255, 0.1);
+        border-radius: 16px;
+        padding: 32px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, rgba(0, 217, 255, 0.1), transparent);
+        transition: all 0.3s;
+    }
+
+    .stat-card:hover {
+        border-color: var(--accent-cyan);
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px var(--glow-cyan);
+    }
+
+    .stat-card:hover::before {
+        top: -25%;
+        right: -25%;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: var(--accent-cyan);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+        font-weight: 700;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-value {
+        font-size: 42px;
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 700;
+        position: relative;
+        z-index: 1;
+    }
+
+    .categories-breakdown {
+        background: rgba(26, 26, 62, 0.4);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(0, 217, 255, 0.1);
+        border-radius: 16px;
+        padding: 32px;
+        transition: all 0.3s ease;
+    }
+
+    .categories-breakdown:hover {
+        border-color: var(--accent-cyan);
+        box-shadow: 0 20px 40px var(--glow-cyan);
+    }
+
+    .breakdown-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--accent-cyan);
+        margin-bottom: 24px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .category-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 0;
+        border-bottom: 1px solid rgba(0, 217, 255, 0.1);
+        transition: all 0.2s;
+    }
+
+    .category-item:hover {
+        padding-left: 8px;
+        color: var(--accent-cyan);
+    }
+
+    .category-item:last-child {
+        border-bottom: none;
+    }
+
+    .category-name {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+    }
+
+    .category-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        box-shadow: 0 0 10px var(--glow-cyan);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 10px var(--glow-cyan); }
+        50% { box-shadow: 0 0 20px var(--glow-cyan); }
+    }
+
+    .category-count {
+        font-size: 14px;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Modal */
+    .modal-content {
+        background: rgba(26, 26, 62, 0.6);
+        backdrop-filter: blur(20px);
+        border: 2px solid rgba(0, 217, 255, 0.2);
+        border-radius: 16px;
+        box-shadow: 0 0 60px var(--glow-cyan);
+    }
+
+    .modal-header {
+        background: linear-gradient(90deg, rgba(0, 217, 255, 0.1), rgba(203, 94, 238, 0.1));
+        border-bottom: 2px solid rgba(0, 217, 255, 0.2);
+        border-radius: 14px 14px 0 0;
+    }
+
+    .modal-title {
+        color: var(--accent-cyan);
+        font-size: 16px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .modal-body {
+        color: var(--text-primary);
+        padding: 32px;
+    }
+
+    .modal-footer {
+        background: linear-gradient(90deg, rgba(0, 217, 255, 0.05), rgba(203, 94, 238, 0.05));
+        border-top: 1px solid rgba(0, 217, 255, 0.1);
+    }
+
+    .close {
+        color: var(--accent-cyan);
+        opacity: 0.8;
+        transition: all 0.2s;
+        font-size: 24px;
+    }
+
+    .close:hover {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+
+    pre {
+        background: rgba(0, 0, 0, 0.3) !important;
+        color: var(--accent-cyan) !important;
+        border: 1px solid rgba(0, 217, 255, 0.2);
+        border-radius: 8px;
+        padding: 20px !important;
+        overflow-x: auto;
+        font-size: 13px;
+    }
+
+    .modal p strong {
+        color: var(--accent-cyan);
+    }
+
+    /* Create Tab Styles */
+    .create-form-card {
+        background: rgba(26, 26, 62, 0.4);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(0, 217, 255, 0.1);
+        border-radius: 16px;
+        padding: 32px;
+        transition: all 0.3s ease;
+    }
+
+    .create-form-card:hover {
+        border-color: rgba(0, 217, 255, 0.2);
+        box-shadow: 0 20px 40px var(--glow-cyan);
+    }
+
+    .form-section {
+        margin-bottom: 28px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 12px;
+        color: var(--accent-cyan);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+        font-weight: 700;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(0, 217, 255, 0.2);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 14px;
+        font-family: inherit;
+        transition: all 0.3s ease;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--accent-cyan);
+        background: rgba(0, 217, 255, 0.05);
+        box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+    }
+
+    .form-input::placeholder {
+        color: var(--text-secondary);
+    }
+
+    .form-textarea {
+        resize: vertical;
+        min-height: 120px;
+        font-family: inherit;
+    }
+
+    .user-search-container {
+        position: relative;
+    }
+
+    .user-search-input {
+        width: 100%;
+    }
+
+    .autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(26, 26, 62, 0.8);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(0, 217, 255, 0.2);
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        max-height: 250px;
+        overflow-y: auto;
+        display: none;
+        z-index: 100;
+    }
+
+    .autocomplete-dropdown.active {
+        display: block;
+    }
+
+    .autocomplete-item {
+        padding: 12px 16px;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.2s;
+        border-bottom: 1px solid rgba(0, 217, 255, 0.1);
+        font-size: 14px;
+    }
+
+    .autocomplete-item:hover {
+        background: rgba(0, 217, 255, 0.1);
+        padding-left: 20px;
+    }
+
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+
+    .autocomplete-item-primary {
+        color: var(--accent-cyan);
+        font-weight: 600;
+    }
+
+    .autocomplete-item-secondary {
+        color: var(--text-secondary);
+        font-size: 12px;
+    }
+
+    .selected-user-badge {
+        padding: 12px 16px;
+        background: rgba(0, 217, 255, 0.1);
+        border: 2px solid rgba(0, 217, 255, 0.3);
+        border-radius: 8px;
+        color: var(--accent-cyan);
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .image-upload-area {
+        border: 2px dashed rgba(0, 217, 255, 0.3);
+        border-radius: 8px;
+        padding: 32px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(0, 217, 255, 0.02);
+    }
+
+    .image-upload-area:hover {
+        border-color: rgba(0, 217, 255, 0.5);
+        background: rgba(0, 217, 255, 0.08);
+    }
+
+    .image-upload-area.dragging {
+        border-color: var(--accent-cyan);
+        background: rgba(0, 217, 255, 0.1);
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 14px 24px;
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 0 30px var(--glow-cyan);
+    }
+
+    .btn-submit::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 40px rgba(0, 217, 255, 0.4);
+    }
+
+    .btn-submit:hover::before {
+        left: 100%;
+    }
+
+    .btn-submit:active {
+        transform: translateY(0);
+    }
+
+</style>
+
+<div class="submissions-wrapper">
+        <div class="header">
+            <h1>✨ COMMUNITY DEEDS DASHBOARD</h1>
+        </div>
+
+        <div class="tabs-container">
+            <button class="tab-button active" onclick="showTab('data')">📊 DATA</button>
+            <button class="tab-button" onclick="showTab('images')">🖼️ IMAGES</button>
+            <button class="tab-button" onclick="showTab('info')">ℹ️ ANALYTICS</button>
+            <button class="tab-button" onclick="showTab('create')">✨ CREATE</button>
+        </div>
+
+        <!-- Data Tab -->
+        <div id="data" class="tab-content active">
+            <div class="table-wrapper">
+                <table class="table" id="submissionsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Category</th>
+                            <th>Content</th>
+                            <th>Submitted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for submission in submissions %}
+                        {% if submission.user.id == current_user.id or current_user.role == 'Admin' %}
+                        <tr id="submission-{{ submission.id }}">
+                            <td>#{{ submission.id }}</td>
+                            <td>{{ submission.user.name }}</td>
+                            <td><span class="badge badge-{{ submission.category | lower }}">{{ submission.category }}</span></td>
+                            <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {% if submission.content %}
+                                    {{ submission.content|string|truncate(80) }}
+                                {% else %}
+                                    <span style="color: var(--text-secondary);">No content</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-size: 12px; color: var(--text-secondary);">{{ submission.submitted_at.strftime('%m/%d %H:%M') if submission.submitted_at else 'N/A' }}</td>
+                            <td>
+                                <button class="btn btn-view view-btn" data-id="{{ submission.id }}" data-full-content="{{ submission.content | string }}" data-category="{{ submission.category }}">View</button>
+                                {% if submission.user.id == current_user.id or current_user.role == 'Admin' %}
+                                <button class="btn btn-delete delete-btn" data-id="{{ submission.id }}">Delete</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Images Tab -->
+        <div id="images" class="tab-content">
+            <div class="images-grid" id="imagesGrid">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Info Tab -->
+        <div id="info" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Submissions</div>
+                    <div class="stat-value" id="totalSubmissions">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">With Images</div>
+                    <div class="stat-value" id="submissionsWithImages">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Storage Used</div>
+                    <div class="stat-value" id="storageUsed">0 MB</div>
+                </div>
+            </div>
+
+            <div class="categories-breakdown">
+                <div class="breakdown-title">Submissions by Category</div>
+                <div id="categoryBreakdown"></div>
+            </div>
+        </div>
+
+        <!-- Create Tab -->
+        <div id="create" class="tab-content">
+            <div style="max-width: 600px;">
+                <div class="create-form-card">
+                    <div class="form-section">
+                        <label class="form-label">SELECT USER</label>
+                        <div class="user-search-container">
+                            <input type="text" id="userSearchInput" class="form-input user-search-input" placeholder="Search for a user..." autocomplete="off">
+                            <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+                        </div>
+                        <div id="selectedUserInfo" style="margin-top: 16px; display: none;">
+                            <div class="selected-user-badge">
+                                👤 <span id="selectedUserName"></span> <span style="color: var(--text-secondary);">#<span id="selectedUserId"></span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">CATEGORY</label>
+                        <select id="categorySelect" class="form-input">
+                            <option value="">Select a category...</option>
+                            <option value="volunteer">Volunteer</option>
+                            <option value="charity">Charity</option>
+                            <option value="environmental">Environmental</option>
+                            <option value="mentoring">Mentoring</option>
+                            <option value="community">Community</option>
+                            <option value="fundraising">Fundraising</option>
+                            <option value="cleanup">Cleanup</option>
+                            <option value="donation">Donation</option>
+                            <option value="support">Support</option>
+                            <option value="Misc">Miscellaneous</option>
+                        </select>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">UPLOAD IMAGE (OPTIONAL)</label>
+                        <div class="image-upload-area" id="imageUploadArea">
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; margin-bottom: 12px;">📸</div>
+                                <div style="color: var(--accent-cyan); font-weight: 600; margin-bottom: 4px;">Click to upload or drag & drop</div>
+                                <div style="color: var(--text-secondary); font-size: 12px;">PNG, JPG, GIF, WEBP (Max 10MB)</div>
+                            </div>
+                            <input type="file" id="imageInput" style="display: none;" accept="image/*">
+                        </div>
+                        <div id="imagePreview" style="display: none; margin-top: 16px;">
+                            <img id="previewImg" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 2px solid rgba(0, 217, 255, 0.2);">
+                            <button type="button" class="btn btn-delete" style="margin-top: 12px; width: 100%;" onclick="clearImage()">Remove Image</button>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">DESCRIPTION</label>
+                        <textarea id="descriptionInput" class="form-input form-textarea" placeholder="Describe the deed you want to submit..." maxlength="2000"></textarea>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+                            <span id="charCount">0</span>/2000 characters
+                        </div>
+                    </div>
+
+                    <button class="btn-submit" onclick="submitDeed()">
+                        <span>✨ CREATE DEED</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Content Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1" role="dialog" aria-labelledby="viewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewModalLabel">Submission Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="viewModalBody">
+                Loading...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-delete" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        
+        // Show selected tab
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
+        
+        // Load data for specific tabs
+        if (tabName === 'images') loadImages();
+        if (tabName === 'info') loadInfo();
+    }
+
+    $(document).ready(function () {
+        // Initialize DataTables
+        const table = $("#submissionsTable").DataTable({
+            "aaSorting": [[0, "desc"]]
+        });
+        table.page.len(-1).draw();
+
+        // Handle view action
+        document.querySelectorAll(".view-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                const id = this.dataset.id;
+                const row = $(`#submission-${id}`);
+                const userName = row.find('td').eq(1).text().trim();
+                const category = this.dataset.category.trim();
+                const fullContent = this.dataset.fullContent.trim();
+                const submittedAt = row.find('td').eq(4).text().trim();
+                
+                $("#viewModalLabel").text(`Submission #${id}`);
+                
+                let modalHTML = `
+                    <p><strong>User:</strong> ${userName}</p>
+                    <p><strong>Category:</strong> <span class="badge badge-${category.toLowerCase()}">${category}</span></p>
+                    <p><strong>Submitted:</strong> ${submittedAt}</p>
+                    <p><strong>Content:</strong></p>
+                    <pre>${escapeHtml(fullContent)}</pre>
+                `;
+                
+                // Fetch and display image if it exists
+                fetch(`/submit/image/${id}`)
+                    .then(response => response.ok ? response.json() : Promise.reject())
+                    .then(data => {
+                        if (data.image) {
+                            modalHTML = `
+                                <div style="text-align: center; margin-bottom: 20px;">
+                                    <img src="data:image/png;base64,${data.image}" style="max-width: 100%; max-height: 400px; border-radius: 4px;">
+                                </div>
+                            ` + modalHTML;
+                        }
+                        $("#viewModalBody").html(modalHTML);
+                    })
+                    .catch(() => $("#viewModalBody").html(modalHTML));
+                
+                $("#viewModal").modal("show");
+            });
+        });
+
+        // Handle delete action
+        document.querySelectorAll(".delete-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                const id = this.dataset.id;
+                if (confirm("Are you sure you want to delete this submission and its image?")) {
+                    fetch(`/submit/delete/${id}`, {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            alert(data.message || "Submission deleted successfully.");
+                            location.reload();
+                        })
+                        .catch(error => alert("Error deleting submission."));
+                }
+            });
+        });
+
+        $(document).on('click', '[data-dismiss="modal"]', function() {
+            $(this).closest('.modal').modal('hide');
+        });
+    });
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function loadImages() {
+        fetch(`/submit/`)
+            .then(r => r.json())
+            .then(submissions => {
+                const grid = document.getElementById('imagesGrid');
+                const imagesWithImages = submissions.filter(s => s.image);
+                
+                if (imagesWithImages.length === 0) {
+                    grid.innerHTML = '<div class="no-images">No images uploaded yet</div>';
+                    return;
+                }
+                
+                grid.innerHTML = imagesWithImages.map(sub => `
+                    <div class="image-card" onclick="viewSubmission(${sub.id})">
+                        <img class="image-card-img" src="/submit/image/${sub.id}" style="display:none;">
+                        <div style="width: 100%; height: 160px; background-color: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-secondary); position: relative;">
+                            <div style="position: absolute; width: 100%; height: 100%;" id="img-container-${sub.id}"></div>
+                        </div>
+                        <div class="image-card-info">
+                            <div class="image-card-id">Submission #${sub.id}</div>
+                            <div class="image-card-filename">${sub.category}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Load images asynchronously
+                imagesWithImages.forEach(sub => {
+                    fetch(`/submit/image/${sub.id}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            const container = document.getElementById(`img-container-${sub.id}`);
+                            container.innerHTML = `<img src="data:image/png;base64,${data.image}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                        });
+                });
+            });
+    }
+
+    function loadInfo() {
+        fetch(`/submit/`)
+            .then(r => r.json())
+            .then(submissions => {
+                // Calculate stats
+                const total = submissions.length;
+                const withImages = submissions.filter(s => s.image).length;
+                
+                document.getElementById('totalSubmissions').textContent = total;
+                document.getElementById('submissionsWithImages').textContent = withImages;
+                
+                // Category breakdown
+                const categories = {};
+                submissions.forEach(s => {
+                    categories[s.category] = (categories[s.category] || 0) + 1;
+                });
+                
+                const breakdown = document.getElementById('categoryBreakdown');
+                breakdown.innerHTML = Object.entries(categories)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([cat, count]) => `
+                        <div class="category-item">
+                            <div class="category-name">
+                                <div class="category-dot"></div>
+                                ${cat}
+                            </div>
+                            <div class="category-count">${count}</div>
+                        </div>
+                    `).join('');
+                
+                // Storage calculation (rough estimate)
+                let totalSize = submissions.filter(s => s.image).length * 0.5; // Estimate 500KB per image
+                document.getElementById('storageUsed').textContent = totalSize.toFixed(1) + ' MB';
+            });
+    }
+
+    function viewSubmission(id) {
+        document.querySelector(`[data-id="${id}"].view-btn`)?.click();
+    }
+
+    // Create Tab Functions
+    let selectedUserId = null;
+    let uploadedImage = null;
+    let allUsers = [];
+
+    function initializeCreateTab() {
+        // Fetch all users for autocomplete
+        fetch(`/api/user`)
+            .then(r => r.json())
+            .then(data => {
+                // The endpoint returns an object with pagination info, extract users array
+                if (Array.isArray(data)) {
+                    allUsers = data;
+                } else if (data.users) {
+                    allUsers = data.users;
+                } else if (data.items) {
+                    allUsers = data.items;
+                } else {
+                    allUsers = [];
+                }
+                console.log('Loaded users:', allUsers.length);
+            })
+            .catch(e => console.log('Could not load users:', e));
+
+        // User search input
+        const userSearchInput = document.getElementById('userSearchInput');
+        const autocompleteDropdown = document.getElementById('autocompleteDropdown');
+
+        userSearchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            
+            if (query.length === 0) {
+                autocompleteDropdown.classList.remove('active');
+                return;
+            }
+
+            const filtered = allUsers.filter(user => 
+                user.name.toLowerCase().startsWith(query)
+            );
+
+            if (filtered.length === 0) {
+                autocompleteDropdown.classList.remove('active');
+                return;
+            }
+
+            autocompleteDropdown.innerHTML = filtered.map(user => `
+                <div class="autocomplete-item" onclick="selectUser(${user.id}, '${user.name}')">
+                    <div class="autocomplete-item-primary">${user.name}</div>
+                    <div class="autocomplete-item-secondary">ID: ${user.id}</div>
+                </div>
+            `).join('');
+            
+            autocompleteDropdown.classList.add('active');
+        });
+
+        // Image upload
+        const imageUploadArea = document.getElementById('imageUploadArea');
+        const imageInput = document.getElementById('imageInput');
+
+        imageUploadArea.addEventListener('click', () => imageInput.click());
+
+        imageUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            imageUploadArea.classList.add('dragging');
+        });
+
+        imageUploadArea.addEventListener('dragleave', () => {
+            imageUploadArea.classList.remove('dragging');
+        });
+
+        imageUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            imageUploadArea.classList.remove('dragging');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleImageFile(files[0]);
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleImageFile(e.target.files[0]);
+            }
+        });
+
+        // Character counter
+        const descriptionInput = document.getElementById('descriptionInput');
+        descriptionInput.addEventListener('input', function() {
+            document.getElementById('charCount').textContent = this.value.length;
+        });
+
+        // Close autocomplete when clicking elsewhere
+        document.addEventListener('click', function(e) {
+            if (e.target !== userSearchInput) {
+                autocompleteDropdown.classList.remove('active');
+            }
+        });
+    }
+
+    function selectUser(userId, userName) {
+        selectedUserId = userId;
+        document.getElementById('userSearchInput').value = userName;
+        document.getElementById('selectedUserName').textContent = userName;
+        document.getElementById('selectedUserId').textContent = userId;
+        document.getElementById('selectedUserInfo').style.display = 'block';
+        document.getElementById('autocompleteDropdown').classList.remove('active');
+    }
+
+    function handleImageFile(file) {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        
+        if (file.size > maxSize) {
+            alert('File size exceeds 10MB limit');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            uploadedImage = e.target.result.split(',')[1]; // Get base64 without data URI prefix
+            
+            // Show preview
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('imagePreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function clearImage() {
+        uploadedImage = null;
+        document.getElementById('imageInput').value = '';
+        document.getElementById('imagePreview').style.display = 'none';
+    }
+
+    function submitDeed() {
+        // Validation
+        if (!selectedUserId) {
+            alert('Please select a user');
+            return;
+        }
+
+        const category = document.getElementById('categorySelect').value;
+        if (!category) {
+            alert('Please select a category');
+            return;
+        }
+
+        const description = document.getElementById('descriptionInput').value.trim();
+        if (!description) {
+            alert('Please enter a description');
+            return;
+        }
+
+        // Create the submission
+        const payload = {
+            content: description,
+            category: category
+        };
+
+        if (uploadedImage) {
+            payload.image = uploadedImage;
+        }
+
+        // Create the submission for the specified user
+        fetch(`/submit/create/${selectedUserId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.id) {
+                alert(`✨ Deed created successfully for ${document.getElementById('selectedUserName').textContent}!`);
+                // Reset form
+                document.getElementById('userSearchInput').value = '';
+                document.getElementById('categorySelect').value = '';
+                document.getElementById('descriptionInput').value = '';
+                document.getElementById('charCount').textContent = '0';
+                document.getElementById('selectedUserInfo').style.display = 'none';
+                document.getElementById('imagePreview').style.display = 'none';
+                selectedUserId = null;
+                uploadedImage = null;
+                
+                // Refresh data
+                loadInfo();
+                location.reload();
+            } else {
+                alert('Error creating deed: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error creating deed');
+        });
+    }
+
+    // Initialize create tab on page load
+    initializeCreateTab();
+</script>
+
+{% endblock %}

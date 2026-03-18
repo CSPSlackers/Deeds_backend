@@ -43,6 +43,7 @@ from model.classroom import Classroom
 from model.persona import Persona, initPersonas, initPersonaUsers
 from model.post import Post, init_posts
 from model.microblog import MicroBlog, Topic, initMicroblogs
+from model.submissions import Submissions
 from hacks.jokes import initJokes 
 # from model.announcement import Announcement ##temporary revert
 
@@ -88,7 +89,7 @@ with app.app_context():
     initJokes()
 
 # Tell Flask-Login the view function name of your login route
-login_manager.login_view = "login"
+login_manager.login_view = "login"  # type: ignore
 
 @login_manager.unauthorized_handler
 def unauthorized_callback():
@@ -156,6 +157,12 @@ def u2table():
 def sections():
     sections = Section.query.all()
     return render_template("sections.html", sections=sections)
+
+@app.route('/submissions/')
+@login_required
+def submissions_table():
+    submissions = Submissions.query.all()
+    return render_template("submissions_table.html", submissions=submissions)
 
 @app.route('/persona/')
 @login_required

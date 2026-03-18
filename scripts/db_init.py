@@ -29,7 +29,9 @@ import os
 # Add the directory containing main.py to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # Import application object
-from main import app, db, generate_data 
+from main import app, db, generate_data
+# Import all models to ensure they're registered with db
+from model.submissions import Submissions 
 
 # Backup the old database
 def backup_database(db_uri, backup_uri):
@@ -41,6 +43,16 @@ def backup_database(db_uri, backup_uri):
         print(f"Database backed up to {backup_path}")
     else:
         print("Backup not supported for production database.")
+
+# Clean up upload images
+def cleanup_images():
+    """Delete all submission images."""
+    submissions_dir = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'instance', 'uploads', 'submissions')
+    if os.path.exists(submissions_dir):
+        shutil.rmtree(submissions_dir)
+        print(f"Cleaned up submissions images directory: {submissions_dir}")
+    else:
+        print("No submissions images directory found.")
 
 # Main extraction and loading process
 def main():
@@ -66,6 +78,9 @@ def main():
                     
             # Backup the old database
             backup_database(app.config['SQLALCHEMY_DATABASE_URI'], app.config['SQLALCHEMY_BACKUP_URI'])
+            
+            # Clean up submission images
+            cleanup_images()
            
         except Exception as e:
             print(f"An error occurred: {e}")

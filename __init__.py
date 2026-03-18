@@ -108,7 +108,7 @@ app.config['SQLALCHEMY_DATABASE_STRING'] = dbString
 app.config['SQLALCHEMY_DATABASE_URI'] = dbURI
 app.config['SQLALCHEMY_BACKUP_URI'] = backupURI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+db: SQLAlchemy = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 
