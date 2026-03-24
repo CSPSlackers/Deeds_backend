@@ -39,22 +39,27 @@ class SubmissionAPI:
                 submission.create()
                 print(f"Created submission with ID: {submission.id}")
                 
-                # Handle image upload - store the filename
-                image_filename = None
+                # Handle image upload - store compressed binary data
+                compressed_image_data = None
                 if base64_image:
-                    image_filename = submission_image_base64_upload(base64_image)
-                    print(f"Uploaded base64 image: {image_filename}")
+                    compressed_image_data = submission_image_base64_upload(base64_image)
+                    print(f"Processed base64 image")
                 elif 'image' in request.files:
                     image_file = request.files['image']
-                    image_filename = submission_image_file_upload(image_file)
-                    print(f"Uploaded file image: {image_filename}")
+                    compressed_image_data = submission_image_file_upload(image_file)
+                    print(f"Processed file image")
                 
-                if image_filename:
-                    submission.image = image_filename
-                    submission.update(image=image_filename)
-                    print(f"Saved image filename to submission: {image_filename}")
+                if compressed_image_data:
+                    submission.image = compressed_image_data
+                    submission.update(image=compressed_image_data)
+                    print(f"Saved compressed image data to submission {submission.id}")
                 
-                return submission.read(), 201
+                # Prepare response with base64 image if present
+                result = submission.read()
+                if submission.image:
+                    result['image'] = submission_image_base64_decode(submission.image)
+                    
+                return result, 201
             except Exception as e:
                 db.session.rollback()
                 print(f"Error creating submission: {str(e)}")
@@ -69,8 +74,9 @@ class SubmissionAPI:
                 if not submission:
                     return {'message': f'Submission {id} not found'}, 404
                 result = submission.read()
-                # Debug logging
-                print(f"DEBUG: Submission {id} retrieved. Image field: {submission.image}")
+                # If there's an image, decode it to base64 for API response
+                if submission.image:
+                    result['image'] = submission_image_base64_decode(submission.image)
                 return result
             else:
                 # Get current user's submissions
@@ -79,7 +85,13 @@ class SubmissionAPI:
                     return {'message': 'User not found'}, 404
                 
                 submissions = Submissions.get_by_user(user.id)
-                json_ready = [s.read() for s in submissions]
+                json_ready = []
+                for s in submissions:
+                    data = s.read()
+                    # Decode image to base64 if it exists
+                    if s.image:
+                        data['image'] = submission_image_base64_decode(s.image)
+                    json_ready.append(data)
                 return json_ready
     
     class _Update(Resource):
@@ -108,24 +120,25 @@ class SubmissionAPI:
                     submission.update(category=Submissions._validate_category(category))
                 
                 # Handle image upload/update
-                image_filename = None
+                compressed_image_data = None
                 if base64_image:
-                    # Delete old image if exists
-                    if submission.image:
-                        submission_image_delete(submission.image)
-                    image_filename = submission_image_base64_upload(base64_image)
+                    # Old image will be overwritten automatically
+                    compressed_image_data = submission_image_base64_upload(base64_image)
                 elif 'image' in request.files:
                     image_file = request.files['image']
-                    # Delete old image if exists
-                    if submission.image:
-                        submission_image_delete(submission.image)
-                    image_filename = submission_image_file_upload(image_file)
+                    # Old image will be overwritten automatically
+                    compressed_image_data = submission_image_file_upload(image_file)
                 
-                if image_filename:
-                    submission.update(image=image_filename)
-                    print(f"Updated image for submission {id}: {image_filename}")
+                if compressed_image_data:
+                    submission.update(image=compressed_image_data)
+                    print(f"Updated image for submission {id}")
                 
-                return submission.read()
+                # Prepare response with base64 image if present
+                result = submission.read()
+                if submission.image:
+                    result['image'] = submission_image_base64_decode(submission.image)
+                    
+                return result
             except Exception as e:
                 db.session.rollback()
                 print(f"Error updating submission: {str(e)}")
@@ -141,11 +154,7 @@ class SubmissionAPI:
             
             json_data = submission.read()
             try:
-                # Delete the image file if it exists
-                if submission.image:
-                    submission_image_delete(submission.image)
-                    print(f"Deleted image for submission {id}: {submission.image}")
-                
+                # Image data is stored in DB, will be deleted with submission
                 submission.delete()
                 return {'message': 'Submission deleted', 'submission': json_data}, 200
             except Exception as e:
@@ -166,11 +175,9 @@ class SubmissionAPI:
                 return {'message': f'Submission {id} not found'}, 404
             
             if not submission.image:
-                print(f"No image for submission {id} (image field is NULL)")
                 return {'message': f'No image for submission {id}'}, 404
             
-            print(f"Retrieving image for submission {id}: {submission.image}")
-            # submission.image now contains the filename
+            # Decompress and return as base64
             base64_image = submission_image_base64_decode(submission.image)
             if not base64_image:
                 return {'message': 'Error retrieving image'}, 500
@@ -212,22 +219,27 @@ class SubmissionAPI:
                 submission.create()
                 print(f"Created submission with ID: {submission.id} for user {user_id}")
                 
-                # Handle image upload - store the filename
-                image_filename = None
+                # Handle image upload - store compressed binary data
+                compressed_image_data = None
                 if base64_image:
-                    image_filename = submission_image_base64_upload(base64_image)
-                    print(f"Uploaded base64 image: {image_filename}")
+                    compressed_image_data = submission_image_base64_upload(base64_image)
+                    print(f"Processed base64 image")
                 elif 'image' in request.files:
                     image_file = request.files['image']
-                    image_filename = submission_image_file_upload(image_file)
-                    print(f"Uploaded file image: {image_filename}")
+                    compressed_image_data = submission_image_file_upload(image_file)
+                    print(f"Processed file image")
                 
-                if image_filename:
-                    submission.image = image_filename
-                    submission.update(image=image_filename)
-                    print(f"Saved image filename to submission: {image_filename}")
+                if compressed_image_data:
+                    submission.image = compressed_image_data
+                    submission.update(image=compressed_image_data)
+                    print(f"Saved compressed image data to submission {submission.id}")
                 
-                return submission.read(), 201
+                # Prepare response with base64 image if present
+                result = submission.read()
+                if submission.image:
+                    result['image'] = submission_image_base64_decode(submission.image)
+                    
+                return result, 201
             except Exception as e:
                 db.session.rollback()
                 print(f"Error creating submission: {str(e)}")

@@ -26,7 +26,7 @@ class Submissions(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     content = db.Column(db.JSON, nullable = False)
     category = db.Column(db.String(50), default = 'Misc', nullable=False)
-    image = db.Column(db.String(255), nullable=True)
+    image = db.Column(db.LargeBinary, nullable=True)  # Stores compressed binary image data
     submitted_at = db.Column(db.DateTime, default = datetime.now)
     user = db.relationship("User", backref=db.backref("submissions_rel", cascade="all, delete-orphan"), overlaps="personas")
 
@@ -50,7 +50,7 @@ class Submissions(db.Model):
         "id": self.id,
         "content": self.content,
         "category": self.category,
-        "image": self.image,
+        "image": None,  # Binary data handled separately in API layer
         "submitted_at": self.submitted_at.isoformat() if self.submitted_at else None,
         "user_id": self.user_id,
         "user_name": self.user.name if self.user else None

@@ -44,15 +44,10 @@ def backup_database(db_uri, backup_uri):
     else:
         print("Backup not supported for production database.")
 
-# Clean up upload images
+# Clean up upload images (DEPRECATED - images now stored in database as binary)
 def cleanup_images():
-    """Delete all submission images."""
-    submissions_dir = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'instance', 'uploads', 'submissions')
-    if os.path.exists(submissions_dir):
-        shutil.rmtree(submissions_dir)
-        print(f"Cleaned up submissions images directory: {submissions_dir}")
-    else:
-        print("No submissions images directory found.")
+    """Images are now stored in the database as compressed binary data. This function is deprecated."""
+    print("Note: Submission images are now stored in the database. No file cleanup needed.")
 
 # Main extraction and loading process
 def main():

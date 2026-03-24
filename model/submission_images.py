@@ -1,6 +1,5 @@
 import base64
-import os
-import uuid
+import zlib
 from werkzeug.utils import secure_filename
 from __init__ import app
 
@@ -10,113 +9,98 @@ def allowed_file(filename):
     """Check if file extension is allowed."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def submission_image_base64_decode(filename):
+def submission_image_base64_decode(compressed_image_data):
     """
-    Reads a submission image from the server and returns it as base64.
+    Converts compressed binary image data back to base64 for API responses.
 
     Parameters:
-    - filename (str): The filename of the image.
+    - compressed_image_data (bytes): The compressed binary image data from database.
 
     Returns:
     - str: The base64 encoded image if successful; otherwise, None.
     """
-    submissions_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'submissions')
-    img_path = os.path.join(submissions_dir, filename)
-    
     try:
-        with open(img_path, 'rb') as img_file:
-            base64_encoded = base64.b64encode(img_file.read()).decode('utf-8')
-        print(f"Successfully read image: {img_path}")
+        if not compressed_image_data:
+            return None
+        
+        # Decompress the data
+        decompressed = zlib.decompress(compressed_image_data)
+        
+        # Encode to base64 for API response
+        base64_encoded = base64.b64encode(decompressed).decode('utf-8')
+        print(f"Successfully decoded image to base64")
         return base64_encoded
     except Exception as e:
-        print(f'An error occurred while reading the image {filename}: {str(e)}')
+        print(f'Error decoding image: {str(e)}')
         return None
 
 def submission_image_base64_upload(base64_image):
     """
-    Uploads a base64 encoded image for a submission.
+    Converts base64 image to compressed binary for database storage.
 
     Parameters:
-    - base64_image (str): The base64 encoded image to be uploaded (can include data URI prefix).
+    - base64_image (str): The base64 encoded image (can include data URI prefix).
 
     Returns:
-    - str: The filename of the saved image if successful; otherwise, None.
+    - bytes: The compressed binary image data if successful; otherwise, None.
     """
     try:
         # Strip data URI prefix if present (e.g., "data:image/png;base64,")
         if ',' in base64_image:
             base64_image = base64_image.split(',', 1)[1]
         
+        # Decode base64 to binary
         image_data = base64.b64decode(base64_image)
         
-        # Create submissions directory
-        submissions_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'submissions')
-        if not os.path.exists(submissions_dir):
-            os.makedirs(submissions_dir)
+        # Compress with zlib (lossless compression)
+        compressed_data = zlib.compress(image_data, level=9)  # level 9 = maximum compression
         
-        # Generate unique filename with UUID
-        unique_id = str(uuid.uuid4())
-        filename = f'submission_{unique_id}.png'
-        file_path = os.path.join(submissions_dir, filename)
-        with open(file_path, 'wb') as img_file:
-            img_file.write(image_data)
-        print(f"Successfully uploaded image: {filename} to {file_path}")
-        return filename
+        print(f"Successfully processed image. Original: {len(image_data)} bytes, Compressed: {len(compressed_data)} bytes, Savings: {(1 - len(compressed_data)/len(image_data))*100:.1f}%")
+        return compressed_data
     except Exception as e:
-        print(f'An error occurred while uploading the image: {str(e)}')
+        print(f'An error occurred while processing the image: {str(e)}')
         return None
 
 def submission_image_file_upload(file):
     """
-    Uploads an image file for a submission.
+    Converts uploaded image file to compressed binary for database storage.
 
     Parameters:
     - file: The file object from request.files.
 
     Returns:
-    - str: The filename of the saved image if successful; otherwise, None.
+    - bytes: The compressed binary image data if successful; otherwise, None.
     """
     try:
         if file and allowed_file(file.filename):
-            # Create submissions directory
-            submissions_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'submissions')
-            if not os.path.exists(submissions_dir):
-                os.makedirs(submissions_dir)
+            # Read file data
+            image_data = file.read()
             
-            # Generate unique filename with UUID
-            file_ext = file.filename.rsplit('.', 1)[1].lower()
-            unique_id = str(uuid.uuid4())
-            filename = f'submission_{unique_id}.{file_ext}'
-            file_path = os.path.join(submissions_dir, filename)
-            file.save(file_path)
-            print(f"Successfully uploaded image: {filename} to {file_path}")
-            return filename
+            # Compress with zlib
+            compressed_data = zlib.compress(image_data, level=9)
+            
+            print(f"Successfully processed image file. Original: {len(image_data)} bytes, Compressed: {len(compressed_data)} bytes, Savings: {(1 - len(compressed_data)/len(image_data))*100:.1f}%")
+            return compressed_data
         else:
             print('Invalid file type. Allowed types: ' + ', '.join(ALLOWED_EXTENSIONS))
             return None
     except Exception as e:
-        print(f'An error occurred while uploading the image: {str(e)}')
+        print(f'An error occurred while processing the image: {str(e)}')
         return None
 
-def submission_image_delete(filename):
+def submission_image_delete(image_data):
     """
-    Deletes a submission image from the server.
+    No-op function for backward compatibility. Images stored in DB don't need file deletion.
 
     Parameters:
-    - filename (str): The filename to delete.
+    - image_data: Ignored (kept for backward compatibility).
 
     Returns:
-    - bool: True if deletion was successful; otherwise, False.
+    - bool: Always True.
     """
-    try:
-        submissions_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'submissions')
-        img_path = os.path.join(submissions_dir, filename)
-        if os.path.exists(img_path):
-            os.remove(img_path)
-            print(f"Successfully deleted image: {img_path}")
-        return True 
-    except Exception as e:
-        print(f'An error occurred while deleting the image {filename}: {str(e)}')
-        return False
+    # No file operations needed - data is in database
+    print(f"Image data will be deleted when submission is deleted from database")
+    return True
+
 
 
