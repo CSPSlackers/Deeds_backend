@@ -79,12 +79,19 @@ class SubmissionAPI:
                     result['image'] = submission_image_base64_decode(submission.image)
                 return result
             else:
-                # Get current user's submissions
-                user = g.current_user
-                if not user:
-                    return {'message': 'User not found'}, 404
+                # Check if requesting all submissions (for carousel)
+                get_all = request.args.get('all', 'false').lower() == 'true'
                 
-                submissions = Submissions.get_by_user(user.id)
+                if get_all:
+                    # Get all submissions
+                    submissions = Submissions.query.all()
+                else:
+                    # Get current user's submissions
+                    user = g.current_user
+                    if not user:
+                        return {'message': 'User not found'}, 404
+                    submissions = Submissions.get_by_user(user.id)
+                
                 json_ready = []
                 for s in submissions:
                     data = s.read()

@@ -1378,7 +1378,7 @@
     function loadCarourselData() {
         // Load all submissions and current carousel
         Promise.all([
-            fetch(`/submit/`)
+            fetch(`/submit/?all=true`)
                 .then(r => r.json()),
             fetch(`/carousel/`)
                 .then(r => r.json())
