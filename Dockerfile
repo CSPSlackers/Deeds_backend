@@ -1,15 +1,11 @@
 # Use official Python image as base image
-FROM python:3.12-slim
+FROM python:3.10
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies and clean up apt cache
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    nodejs \
-    npm && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+# Skip system package installation - network is blocked
+# The base python image includes necessary tools
 
 # Copy application code into the container
 COPY . /app
