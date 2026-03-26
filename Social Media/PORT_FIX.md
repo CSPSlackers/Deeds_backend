@@ -3,7 +3,7 @@
 ## 🚨 THE PROBLEM
 
 **Your frontend is calling:** `localhost:8585` ❌  
-**Your backend is running on:** `localhost:8301` ✅
+**Your backend is running on:** `localhost:8328` ✅
 
 **Result:** 401 errors because you're hitting the wrong server!
 
@@ -19,14 +19,14 @@ In your **FRONTEND repository** (not the backend!), find and edit:
 assets/js/api/config.js
 ```
 
-**Change the port from `8585` to `8301`:**
+**Change the port from `8585` to `8328`:**
 
 ```javascript
 // BEFORE (Wrong):
 const javaURI = "http://localhost:8585";
 
 // AFTER (Correct):
-const javaURI = "http://localhost:8301";
+const javaURI = "http://localhost:8328";
 ```
 
 ---
@@ -45,7 +45,7 @@ Your `config.js` should look something like this:
 
 ```javascript
 // Backend API Configuration
-export const javaURI = "http://localhost:8301";  // ← Make sure it's 8301!
+export const javaURI = "http://localhost:8328";  // ← Make sure it's 8328!
 
 export const fetchOptions = {
     method: 'GET',
@@ -63,7 +63,7 @@ export const fetchOptions = {
 ## 🧪 How to Test
 
 ### **Step 1: Update the Config**
-Edit `assets/js/api/config.js` and change `8585` → `8301`
+Edit `assets/js/api/config.js` and change `8585` → `8328`
 
 ### **Step 2: Refresh Browser**
 Hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
@@ -79,7 +79,7 @@ Open browser console (F12) and you should see:
 
 ### **Test Backend is Working:**
 ```bash
-curl http://localhost:8301/api/post/all
+curl http://localhost:8328/api/post/all
 # Should return: []
 ```
 
@@ -95,7 +95,7 @@ curl http://localhost:8585/api/post/all
 
 | Service | Port | Status |
 |---------|------|--------|
-| **Flask Backend** | **8301** | ✅ Correct - Use this! |
+| **Flask Backend** | **8328** | ✅ Correct - Use this! |
 | Something else | 8585 | ❌ Wrong - Don't use |
 
 ---
@@ -122,16 +122,16 @@ Depending on your frontend setup:
 
 ## ⚠️ Important Notes
 
-1. **Backend is on 8301** - This is confirmed and working ✅
+1. **Backend is on 8328** - This is confirmed and working ✅
 2. **Don't change backend** - It's correct!
-3. **Change frontend config** - Update to port 8301
+3. **Change frontend config** - Update to port 8328
 4. **Restart frontend** - Refresh or restart dev server
 
 ---
 
 ## 🎉 After Fixing
 
-Once you update the port to `8301`:
+Once you update the port to `8328`:
 
 - ✅ No more 401 errors
 - ✅ Posts will load
@@ -163,7 +163,7 @@ If it doesn't exist, create `assets/js/api/config.js`:
 
 ```javascript
 // Backend API Configuration
-export const javaURI = "http://localhost:8301";
+export const javaURI = "http://localhost:8328";
 
 export const fetchOptions = {
     method: 'GET',
@@ -184,8 +184,8 @@ export const fetchOptions = {
 # Go to your frontend repo
 cd ~/pages  # adjust path as needed
 
-# Find and replace 8585 with 8301
-find assets -name "*.js" -type f -exec sed -i '' 's/8585/8301/g' {} +
+# Find and replace 8585 with 8328
+find assets -name "*.js" -type f -exec sed -i '' 's/8585/8328/g' {} +
 
 # Refresh your browser
 # Done!
@@ -197,15 +197,15 @@ find assets -name "*.js" -type f -exec sed -i '' 's/8585/8301/g' {} +
 
 | What | Where | Change |
 |------|-------|--------|
-| **Backend** | Flask (running) | Port **8301** ✅ |
-| **Frontend Config** | `config.js` | Change to **8301** ❌→✅ |
+| **Backend** | Flask (running) | Port **8328** ✅ |
+| **Frontend Config** | `config.js` | Change to **8328** ❌→✅ |
 | **Browser** | Refresh | Hard refresh required |
 
 ---
 
 ## 🎊 You're Almost There!
 
-Just update that one line in your frontend config from `8585` to `8301` and everything will work!
+Just update that one line in your frontend config from `8585` to `8328` and everything will work!
 
 **The backend is perfect - just need to point the frontend to the right port!** 🎯
 

@@ -36,10 +36,10 @@ USER appuser
 
 # Set environment variables
 ENV FLASK_ENV=production \
-    GUNICORN_CMD_ARGS="--workers=5 --threads=2 --bind=0.0.0.0:8301 --timeout=30 --access-logfile -"
+    GUNICORN_CMD_ARGS="--workers=5 --threads=2 --bind=0.0.0.0:8328 --timeout=30 --access-logfile -"
 
 # Expose application port
-EXPOSE 8301
+EXPOSE 8328
 
 # Start Gunicorn server
 CMD ["gunicorn", "main:app"]
