@@ -41,7 +41,7 @@ server {
     # ==============================================================================
     listen 80;
     listen [::]:80;
-    server_name dad.stu.opencodingsociety.com;
+    server_name dad.opencodingsociety.com;
 
     # ==============================================================================
     # WEBSOCKET PROXY: Real-Time Bidirectional Communication
@@ -106,7 +106,7 @@ server {
         # Use HTTP/1.1 for better connection reuse and performance
         proxy_http_version 1.1;
         
-        # Preserve original domain: dad.stu.opencodingsociety.com
+        # Preserve original domain: dad.opencodingsociety.com
         proxy_set_header Host $host;
 
         # ==============================================================================
@@ -120,14 +120,14 @@ server {
         #      → Downloads HTML/JavaScript to browser
         #
         #   2. JavaScript in browser makes API call:
-        #      GET https://dad.stu.opencodingsociety.com/api/users
+        #      GET https://dad.opencodingsociety.com/api/users
         #      → Student's home router → ISP network → Internet
-        #      → DNS: dad.stu.opencodingsociety.com → opencodingsociety.com → 3.233.212.71
-        #      → Arrives at dad.stu.opencodingsociety.com (3.233.212.71)
+        #      → DNS: dad.opencodingsociety.com → opencodingsociety.com → 3.233.212.71
+        #      → Arrives at dad.opencodingsociety.com (3.233.212.71)
         #
         #   3. NGINX (3.233.212.71) receives request at port 443:
         #      Request headers from browser:
-        #        Host: dad.stu.opencodingsociety.com
+        #        Host: dad.opencodingsociety.com
         #        Origin: https://pages.opencodingsociety.com
         #        Client IP: 24.18.xxx.xxx
         #
@@ -137,7 +137,7 @@ server {
         #        IP: 127.0.0.1                     ← WRONG! Shows nginx, not student
         #
         #      WITH proxy_set_header, Flask correctly sees:
-        #        Host: dad.stu.opencodingsociety.com      ← Original domain preserved
+        #        Host: dad.opencodingsociety.com      ← Original domain preserved
         #
         # REVERSE PATH (Response):
         #   Flask → NGINX → Internet → ISP → Home Router → Student's Browser
@@ -155,7 +155,7 @@ server {
         # This configuration implements a whitelist approach to CORS (Cross-Origin Resource Sharing).
         # In DEPLOYMENT, only requests from approved origins can access this API.
         # 
-        # REAL EXAMPLE: pages.opencodingsociety.com (GitHub Pages) → dad.stu.opencodingsociety.com (API)
+        # REAL EXAMPLE: pages.opencodingsociety.com (GitHub Pages) → dad.opencodingsociety.com (API)
         #   - Different subdomains = different origins = CORS required!
         #   - Without CORS headers, browser BLOCKS the request (security feature)
         #   - With proper CORS setup, browser allows pages to call API
@@ -166,7 +166,7 @@ server {
         set $cors_origin "";  # Start with empty string - deny all by default
         
         # Approve all requests from opencodingsociety.com subdomains
-        # Examples: pages.opencodingsociety.com, dad.stu.opencodingsociety.com, dev.opencodingsociety.com
+        # Examples: pages.opencodingsociety.com, dad.opencodingsociety.com, dev.opencodingsociety.com
         # Pattern breakdown:
         #   ^https://           - Must use HTTPS (for production security)
         #   (.*\.)?             - Optional subdomain (e.g., "pages.", "dev.", or none)
@@ -193,7 +193,7 @@ server {
         add_header "Access-Control-Allow-Origin" "$cors_origin" always;
         
         # Tell browser: yes, include cookies/auth tokens in cross-origin requests
-        # Required for maintaining user sessions across pages → dad.stu.opencodingsociety.com
+        # Required for maintaining user sessions across pages → dad.opencodingsociety.com
         add_header "Access-Control-Allow-Credentials" "true" always;
 
         # ==============================================================================
