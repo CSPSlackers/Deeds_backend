@@ -241,8 +241,10 @@ server {
             return 204;
         }
         
-        # For non-OPTIONS requests, still include CORS headers for actual responses
-        add_header "Access-Control-Allow-Origin" "$cors_origin" always;
-        add_header "Access-Control-Allow-Credentials" "true" always;
+        # For non-OPTIONS requests, include CORS headers for actual responses
+        if ($request_method != OPTIONS) {
+            add_header "Access-Control-Allow-Origin" "$cors_origin" always;
+            add_header "Access-Control-Allow-Credentials" "true" always;
+        }
     }
 }
