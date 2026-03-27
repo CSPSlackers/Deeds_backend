@@ -40,6 +40,10 @@ if is_production:
         'https://editor.opencodingsociety.com',
         'https://frontend.opencodingsociety.com',
     ]
+    # Allow additional CORS origins via environment variable (comma-separated)
+    additional_origins = os.environ.get('CORS_ORIGINS', '')
+    if additional_origins:
+        cors_origins.extend([origin.strip() for origin in additional_origins.split(',')])
 else:
     # Development origins
     cors_origins = [
@@ -52,6 +56,10 @@ else:
         'http://localhost:4000',
         'http://127.0.0.1:4000',
     ]
+    # Allow additional CORS origins via environment variable (comma-separated)
+    additional_origins = os.environ.get('CORS_ORIGINS', '')
+    if additional_origins:
+        cors_origins.extend([origin.strip() for origin in additional_origins.split(',')])
 
 cors = CORS(
    app,

@@ -14,6 +14,47 @@ user_api = Blueprint('user_api', __name__,
 # API docs https://flask-restful.readthedocs.io/en/latest/api.html
 api = Api(user_api)
 
+def set_auth_cookie(response, token_value):
+    """
+    Set authentication cookie with appropriate settings for environment.
+    
+    Handles both development and production deployments:
+    - Production with HTTPS: Uses Secure + SameSite=None for cross-origin cookies
+    - Development: Uses Lax SameSite settings
+    - Cross-origin support: Allow specifying COOKIE_DOMAIN env var for cross-domain cookies
+    
+    Args:
+        response: Flask response object to set cookie on
+        token_value: JWT token string to store in cookie
+    """
+    is_production = os.environ.get('IS_PRODUCTION', 'false').lower() == 'true'
+    cookie_domain = os.environ.get('COOKIE_DOMAIN')  # User can override domain via env var
+    
+    if is_production:
+        # Production: HTTPS enabled, allow cross-origin via SameSite=None
+        response.set_cookie(
+            current_app.config["JWT_TOKEN_NAME"],
+            token_value,
+            max_age=43200,  # 12 hours in seconds
+            secure=True,
+            httponly=True,
+            path='/',
+            samesite='None',
+            domain=cookie_domain  # None = current hostname, or specify for cross-domain
+        )
+    else:
+        # Development: HTTP, use Lax SameSite
+        response.set_cookie(
+            current_app.config["JWT_TOKEN_NAME"],
+            token_value,
+            max_age=43200,  # 12 hours in seconds
+            secure=False,
+            httponly=False,  # Set to True for more security if JS access not needed
+            path='/',
+            samesite='Lax',
+            domain=cookie_domain  # None for same-origin (localhost)
+        )
+
 class UserAPI:        
     class _ID(Resource):  # Individual identification API operation
         @token_required()
@@ -405,28 +446,8 @@ class UserAPI:
                         }
                         resp = jsonify(response_data)
                         
-                        # Set cookie
-                        if is_production:
-                            resp.set_cookie(
-                                current_app.config["JWT_TOKEN_NAME"],
-                                token,
-                                max_age=43200,  # 12 hours in seconds
-                                secure=True,
-                                httponly=True,
-                                path='/',
-                                samesite='None',
-                                domain='.opencodingsociety.com'
-                            )
-                        else:
-                            resp.set_cookie(
-                                current_app.config["JWT_TOKEN_NAME"],
-                                token,
-                                max_age=43200,  # 12 hours in seconds
-                                secure=False,
-                                httponly=False,  # Set to True for more security if JS access not needed
-                                path='/',
-                                samesite='Lax'
-                            )
+                        # Set cookie with environment-aware configuration
+                        set_auth_cookie(resp, token)
                         print(f"Token set: {token}")
                         return resp 
                     except Exception as e:
@@ -462,29 +483,9 @@ class UserAPI:
                 
                 # Prepare a response indicating the token has been invalidated
                 resp = Response("Token invalidated successfully")
-                is_production = os.environ.get('IS_PRODUCTION', 'false').lower() == 'true'
-                if is_production:
-                    resp.set_cookie(
-                        current_app.config["JWT_TOKEN_NAME"],
-                        token,
-                        max_age=0,  # Immediately expire the cookie
-                        secure=True,
-                        httponly=True,
-                        path='/',
-                        samesite='None',
-                        domain='.opencodingsociety.com'
                 
-                    )
-                else:
-                    resp.set_cookie(
-                        current_app.config["JWT_TOKEN_NAME"],
-                        token,
-                        max_age=0,  # Immediately expire the cookie
-                        secure=False,
-                        httponly=False,  # Set to True for more security if JS access not needed
-                        path='/',
-                        samesite='Lax'
-                    )
+                # Clear cookie with environment-aware configuration
+                set_auth_cookie(resp, "")  # Empty token expires the cookie
                 return resp
             except Exception as e:
                 return {
