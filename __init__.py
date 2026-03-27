@@ -29,19 +29,34 @@ login_manager.init_app(app)
 # Allowed servers for cross-origin resource sharing (CORS)
 # Flask-CORS handles LOCAL DEVELOPMENT only
 # Production CORS is handled by nginx (to avoid duplicate headers)
+is_production = os.environ.get('IS_PRODUCTION', 'false').lower() == 'true'
+
+if is_production:
+    # Production origins - allow opencodingsociety.com and subdomains
+    cors_origins = [
+        'https://opencodingsociety.com',
+        'https://www.opencodingsociety.com',
+        'https://dad.opencodingsociety.com',
+        'https://editor.opencodingsociety.com',
+        'https://frontend.opencodingsociety.com',
+    ]
+else:
+    # Development origins
+    cors_origins = [
+        'http://localhost:4500',
+        'http://127.0.0.1:4500',
+        'http://localhost:4599',
+        'http://127.0.0.1:4599',
+        'http://localhost:4600',
+        'http://127.0.0.1:4600',
+        'http://localhost:4000',
+        'http://127.0.0.1:4000',
+    ]
+
 cors = CORS(
    app,
    supports_credentials=True,
-   origins=[
-       'http://localhost:4500',
-       'http://127.0.0.1:4500',
-       'http://localhost:4599',
-       'http://127.0.0.1:4599',
-       'http://localhost:4600',
-       'http://127.0.0.1:4600',
-       'http://localhost:4000',
-       'http://127.0.0.1:4000',
-   ],
+   origins=cors_origins,
    methods=["GET", "POST", "PUT", "OPTIONS"]
 )
 
