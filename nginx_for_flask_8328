@@ -188,13 +188,6 @@ server {
         # 'always' ensures headers are added even on error responses (4xx, 5xx)
         # ==============================================================================
         
-        # Tell browser: yes, this origin can access the response
-        # $cors_origin is set above (only if origin was approved)
-        add_header "Access-Control-Allow-Origin" "$cors_origin" always;
-        # Tell browser: yes, include cookies/auth tokens in cross-origin requests
-        # Required for maintaining user sessions across pages → dad.opencodingsociety.com
-        add_header "Access-Control-Allow-Credentials" "true" always;
-
         # ==============================================================================
         # CROSS-ORIGIN REQUESTS: 2-PART PROCESS
         # ==============================================================================
@@ -220,6 +213,14 @@ server {
         # ==============================================================================
         
         if ($request_method = OPTIONS) {
+            # Tell browser: yes, this origin can access the response
+            # $cors_origin is set above (only if origin was approved)
+            add_header "Access-Control-Allow-Origin" "$cors_origin" always;
+            
+            # Tell browser: yes, include cookies/auth tokens in cross-origin requests
+            # Required for maintaining user sessions across pages → dad.opencodingsociety.com
+            add_header "Access-Control-Allow-Credentials" "true" always;
+            
             # Tell browser: these HTTP methods are permitted for cross-origin requests
             # GET/POST = read/create data, PUT = update, DELETE = remove, HEAD = metadata
             add_header "Access-Control-Allow-Methods" "GET, POST, PUT, DELETE, OPTIONS, HEAD" always;
@@ -239,5 +240,9 @@ server {
             # Browser now knows it's safe to send the actual request
             return 204;
         }
+        
+        # For non-OPTIONS requests, still include CORS headers for actual responses
+        add_header "Access-Control-Allow-Origin" "$cors_origin" always;
+        add_header "Access-Control-Allow-Credentials" "true" always;
     }
 }
