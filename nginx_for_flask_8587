@@ -177,7 +177,7 @@ server {
         
         # Approve GitHub Pages deployments from open-coding-society organization
         # Example: https://open-coding-society.github.io
-        if ($http_origin = "https://open-coding-society.github.io") {
+        if ($http_origin = "https://cspslackers.github.io") {
             set $cors_origin $http_origin;
         }
 
@@ -191,7 +191,6 @@ server {
         # Tell browser: yes, this origin can access the response
         # $cors_origin is set above (only if origin was approved)
         add_header "Access-Control-Allow-Origin" "$cors_origin" always;
-        
         # Tell browser: yes, include cookies/auth tokens in cross-origin requests
         # Required for maintaining user sessions across pages → dad.opencodingsociety.com
         add_header "Access-Control-Allow-Credentials" "true" always;
