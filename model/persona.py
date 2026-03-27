@@ -610,6 +610,14 @@ def initPersonas():
             except IntegrityError:
                 db.session.rollback()
                 print(f"Persona already exists: {persona._alias}")
+        
+        # Final commit to ensure all personas are persisted
+        try:
+            db.session.commit()
+            print("All personas initialized successfully!")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error committing personas: {e}")
 
 
 def initPersonaUsers():

@@ -505,9 +505,37 @@ class User(db.Model, UserMixin):
         else:
             # Handle the case where the section exists
             print("Section with abbreviation '{}' exists.".format(section._abbreviation))
-        # update kasm group membership
+        
+        # update kasm group membership (with timeout and error handling)
         if self.kasm_server_needed:
-            KasmUser().post_groups(self.uid, [section.abbreviation])
+            try:
+                from requests.exceptions import RequestException, Timeout, ConnectionError
+                import socket
+                from threading import Thread
+                import time
+                
+                # Try to post groups with a 5-second timeout using threading
+                result = [None]
+                
+                def post_groups_thread():
+                    try:
+                        result[0] = KasmUser().post_groups(self.uid, [section.abbreviation])
+                    except Exception as e:
+                        result[0] = e
+                
+                thread = Thread(target=post_groups_thread, daemon=True)
+                thread.start()
+                thread.join(timeout=5)  # Wait max 5 seconds
+                
+                if thread.is_alive():
+                    print(f"Warning: KASM server timeout for user {self.uid}")
+                elif isinstance(result[0], Exception):
+                    print(f"Warning: Error updating KASM groups for user {self.uid}: {result[0]}")
+                    
+            except Exception as e:
+                # Catch any other errors
+                print(f"Warning: Error updating KASM groups for user {self.uid}: {e}")
+        
         return self
     
     def add_sections(self, sections):
@@ -633,11 +661,9 @@ class User(db.Model, UserMixin):
 
 # Builds working data set for testing
 def initUsers():
-    with app.app_context():
-        """Create database and tables"""
-        db.create_all()
-        """Tester data for table"""
-        
+    """Create default users and sections for testing"""
+    try:
+        # Default grade data
         default_grade_data = {
             'grade': 'A',
             'attendance': 5,
@@ -707,3 +733,14 @@ def initUsers():
         u2.add_section(s2)
         u2.add_section(s3)
         u3.add_section(s4)
+        
+        # Final commit to ensure all data is persisted
+        try:
+            db.session.commit()
+            print("Test users and sections initialized successfully!")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error committing user/section data: {e}")
+    except Exception as e:
+        print(f"Error initializing users: {e}")
+        db.session.rollback()

@@ -105,12 +105,15 @@ def main():
             # Add default test data 
             generate_data() # test data
             
+            # Final commit to ensure all data is persisted
+            print("Committing all data to database...")
+            db.session.commit()
+            print("Database initialized successfully!")
+            
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"Error during database initialization: {e}")
+        db.session.rollback()
         sys.exit(1)
-    
-    # Log success 
-    print("Database initialized!")
  
 if __name__ == "__main__":
     main()
