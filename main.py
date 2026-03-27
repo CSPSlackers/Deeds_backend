@@ -27,7 +27,7 @@ from api.data_export_import_api import data_export_import_api
 from hacks.joke import joke_api  # Import the joke API blueprint
 from api.post import post_api  # Import the social media post API
 from api.submit_api import submit_api
-from api.carousel_api import carousel_api  # Import the carousel API
+from api.chat_api import chat_api  # Import the chat API blueprint
 #from api.announcement import announcement_api ##temporary revert
 
 # database Initialization functions
@@ -45,7 +45,7 @@ from model.persona import Persona, initPersonas, initPersonaUsers
 from model.post import Post, init_posts
 from model.microblog import MicroBlog, Topic, initMicroblogs
 from model.submissions import Submissions
-from model.carousel import Carousel  # Import the carousel model
+from model.chat import initChatMessages  # Import chat model initializer
 from hacks.jokes import initJokes 
 # from model.announcement import Announcement ##temporary revert
 
@@ -84,12 +84,13 @@ app.register_blueprint(data_export_import_api)  # Register the data export/impor
 app.register_blueprint(joke_api)  # Register the joke API blueprint
 app.register_blueprint(post_api)  # Register the social media post API
 app.register_blueprint(submit_api)
-app.register_blueprint(carousel_api)  # Register the carousel API
+app.register_blueprint(chat_api)  # Register the chat API blueprint
 # app.register_blueprint(announcement_api) ##temporary revert
 
 # Jokes file initialization
 with app.app_context():
     initJokes()
+    initChatMessages()  # Initialize chat messages table
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"  # type: ignore
