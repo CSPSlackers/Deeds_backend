@@ -1,49 +1,59 @@
 """
-=============================================================================
-CHAT API - User to Admin Messaging
-=============================================================================
-Endpoints:
-  POST   /api/chat/send          - Send a message
-  GET    /api/chat/messages       - Get messages between two users
-  GET    /api/chat/conversations  - Admin only: list all users who have messaged
-  GET    /api/chat/unread         - Get unread message count
-  PUT    /api/chat/read           - Mark messages as read
-=============================================================================
+CHAT API - User to Admin Messaging (JWT-based auth)
 """
 
 from flask import Blueprint, request, jsonify
 from flask_restful import Api, Resource
-from flask_login import current_user, login_required
-from __init__ import db
+from __init__ import app, db
 from model.chat import ChatMessage
 from model.user import User
+import jwt
 
 chat_api = Blueprint('chat_api', __name__, url_prefix='/api/chat')
 api = Api(chat_api)
 
 
-def is_admin(user):
+def get_current_user():
+    """Get current user from JWT cookie."""
+    token_name = app.config.get('JWT_TOKEN_NAME', 'jwt_python_flask')
+    token = request.cookies.get(token_name)
+    if not token:
+        return None
     try:
-        role = getattr(user, '_role', None) or getattr(user, 'role', None) or ''
-        if str(role).lower() == 'admin':
-            return True
-        if getattr(user, 'is_admin', False):
-            return True
+        secret = app.config.get('SECRET_KEY', 'SECRET_KEY')
+        data = jwt.decode(token, secret, algorithms=['HS256'])
+        uid = data.get('_uid')
+        if not uid:
+            return None
+        return User.query.filter_by(_uid=uid).first()
+    except Exception as e:
+        print(f'JWT decode error: {e}')
+        return None
+
+
+def is_admin(user):
+    """Check if user is admin - only use _role field."""
+    if not user:
         return False
+    try:
+        role = str(getattr(user, '_role', '') or '').strip()
+        return role.lower() == 'admin'
     except Exception:
         return False
 
 
 def find_admin():
-    admin = User.query.filter(User._role == 'Admin').first()
-    if not admin:
-        admin = User.query.filter(User._role == 'admin').first()
-    return admin
+    """Find first admin user."""
+    return User.query.filter(User._role == 'Admin').first() or \
+           User.query.filter(User._role == 'admin').first()
 
 
 class Send(Resource):
-    @login_required
     def post(self):
+        user = get_current_user()
+        if not user:
+            return {'success': False, 'error': 'Not logged in'}, 401
+
         data = request.get_json() or {}
         message_text = data.get('message', '').strip()
         receiver_uid = data.get('receiver_uid', '').strip()
@@ -51,20 +61,20 @@ class Send(Resource):
         if not message_text:
             return {'success': False, 'error': 'Message cannot be empty'}, 400
 
-        if not is_admin(current_user):
+        if not is_admin(user):
             admin = find_admin()
             if not admin:
                 return {'success': False, 'error': 'No admin available'}, 404
             receiver_uid = admin._uid
         else:
             if not receiver_uid:
-                return {'success': False, 'error': 'receiver_uid is required for admin'}, 400
+                return {'success': False, 'error': 'receiver_uid required'}, 400
             receiver = User.query.filter_by(_uid=receiver_uid).first()
             if not receiver:
                 return {'success': False, 'error': 'User not found'}, 404
 
         msg = ChatMessage(
-            sender_uid=current_user._uid,
+            sender_uid=user._uid,
             receiver_uid=receiver_uid,
             message=message_text
         )
@@ -75,11 +85,14 @@ class Send(Resource):
 
 
 class Messages(Resource):
-    @login_required
     def get(self):
+        user = get_current_user()
+        if not user:
+            return {'success': False, 'error': 'Not logged in'}, 401
+
         other_uid = request.args.get('with')
 
-        if not is_admin(current_user):
+        if not is_admin(user):
             admin = find_admin()
             if not admin:
                 return {'success': False, 'error': 'No admin found'}, 404
@@ -91,39 +104,41 @@ class Messages(Resource):
         messages = ChatMessage.query.filter(
             db.or_(
                 db.and_(
-                    ChatMessage.sender_uid == current_user._uid,
+                    ChatMessage.sender_uid == user._uid,
                     ChatMessage.receiver_uid == other_uid
                 ),
                 db.and_(
                     ChatMessage.sender_uid == other_uid,
-                    ChatMessage.receiver_uid == current_user._uid
+                    ChatMessage.receiver_uid == user._uid
                 )
             )
         ).order_by(ChatMessage.timestamp.asc()).all()
 
         for m in messages:
-            if m.receiver_uid == current_user._uid and not m.is_read:
+            if m.receiver_uid == user._uid and not m.is_read:
                 m.is_read = True
         db.session.commit()
 
         return {
             'success': True,
             'messages': [m.to_dict() for m in messages],
-            'current_uid': current_user._uid
+            'current_uid': user._uid
         }, 200
 
 
 class Conversations(Resource):
-    @login_required
     def get(self):
-        if not is_admin(current_user):
+        user = get_current_user()
+        if not user:
+            return {'success': False, 'error': 'Not logged in'}, 401
+        if not is_admin(user):
             return {'success': False, 'error': 'Admin only'}, 403
 
         sent = db.session.query(ChatMessage.sender_uid).filter(
-            ChatMessage.receiver_uid == current_user._uid
+            ChatMessage.receiver_uid == user._uid
         ).distinct()
         received = db.session.query(ChatMessage.receiver_uid).filter(
-            ChatMessage.sender_uid == current_user._uid
+            ChatMessage.sender_uid == user._uid
         ).distinct()
 
         uids = set()
@@ -131,20 +146,20 @@ class Conversations(Resource):
             uids.add(row[0])
         for row in received:
             uids.add(row[0])
-        uids.discard(current_user._uid)
+        uids.discard(user._uid)
 
         users = []
         for uid in uids:
-            user = User.query.filter_by(_uid=uid).first()
-            if user:
+            u = User.query.filter_by(_uid=uid).first()
+            if u:
                 unread = ChatMessage.query.filter_by(
                     sender_uid=uid,
-                    receiver_uid=current_user._uid,
+                    receiver_uid=user._uid,
                     is_read=False
                 ).count()
                 users.append({
-                    'uid': user._uid,
-                    'name': user._name,
+                    'uid': u._uid,
+                    'name': u._name,
                     'unread': unread
                 })
 
@@ -152,18 +167,24 @@ class Conversations(Resource):
 
 
 class Unread(Resource):
-    @login_required
     def get(self):
+        user = get_current_user()
+        if not user:
+            return {'success': False, 'error': 'Not logged in'}, 401
+
         count = ChatMessage.query.filter_by(
-            receiver_uid=current_user._uid,
+            receiver_uid=user._uid,
             is_read=False
         ).count()
         return {'success': True, 'unread': count}, 200
 
 
 class MarkRead(Resource):
-    @login_required
     def put(self):
+        user = get_current_user()
+        if not user:
+            return {'success': False, 'error': 'Not logged in'}, 401
+
         data = request.get_json() or {}
         other_uid = data.get('other_uid')
         if not other_uid:
@@ -171,7 +192,7 @@ class MarkRead(Resource):
 
         ChatMessage.query.filter_by(
             sender_uid=other_uid,
-            receiver_uid=current_user._uid,
+            receiver_uid=user._uid,
             is_read=False
         ).update({'is_read': True})
         db.session.commit()
