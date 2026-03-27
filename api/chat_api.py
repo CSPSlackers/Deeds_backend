@@ -22,6 +22,25 @@ chat_api = Blueprint('chat_api', __name__, url_prefix='/api/chat')
 api = Api(chat_api)
 
 
+def is_admin(user):
+    try:
+        role = getattr(user, '_role', None) or getattr(user, 'role', None) or ''
+        if str(role).lower() == 'admin':
+            return True
+        if getattr(user, 'is_admin', False):
+            return True
+        return False
+    except Exception:
+        return False
+
+
+def find_admin():
+    admin = User.query.filter(User._role == 'Admin').first()
+    if not admin:
+        admin = User.query.filter(User._role == 'admin').first()
+    return admin
+
+
 class Send(Resource):
     @login_required
     def post(self):
@@ -32,15 +51,11 @@ class Send(Resource):
         if not message_text:
             return {'success': False, 'error': 'Message cannot be empty'}, 400
 
-        # Regular users can only message admin
-        if current_user.role != 'Admin':
-            # Find any admin user
-            admin = User.query.filter_by(_role='Admin').first()
+        if not is_admin(current_user):
+            admin = find_admin()
             if not admin:
                 return {'success': False, 'error': 'No admin available'}, 404
             receiver_uid = admin._uid
-
-        # Admins can message any user
         else:
             if not receiver_uid:
                 return {'success': False, 'error': 'receiver_uid is required for admin'}, 400
@@ -64,9 +79,8 @@ class Messages(Resource):
     def get(self):
         other_uid = request.args.get('with')
 
-        # Regular users always chat with admin
-        if current_user.role != 'Admin':
-            admin = User.query.filter_by(_role='Admin').first()
+        if not is_admin(current_user):
+            admin = find_admin()
             if not admin:
                 return {'success': False, 'error': 'No admin found'}, 404
             other_uid = admin._uid
@@ -87,7 +101,6 @@ class Messages(Resource):
             )
         ).order_by(ChatMessage.timestamp.asc()).all()
 
-        # Mark incoming messages as read
         for m in messages:
             if m.receiver_uid == current_user._uid and not m.is_read:
                 m.is_read = True
@@ -103,10 +116,9 @@ class Messages(Resource):
 class Conversations(Resource):
     @login_required
     def get(self):
-        if current_user.role != 'Admin':
+        if not is_admin(current_user):
             return {'success': False, 'error': 'Admin only'}, 403
 
-        # Get all unique user UIDs that have chatted with admin
         sent = db.session.query(ChatMessage.sender_uid).filter(
             ChatMessage.receiver_uid == current_user._uid
         ).distinct()
@@ -125,7 +137,6 @@ class Conversations(Resource):
         for uid in uids:
             user = User.query.filter_by(_uid=uid).first()
             if user:
-                # Count unread messages from this user
                 unread = ChatMessage.query.filter_by(
                     sender_uid=uid,
                     receiver_uid=current_user._uid,
