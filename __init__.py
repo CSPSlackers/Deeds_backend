@@ -39,6 +39,7 @@ if is_production:
         'https://dad.opencodingsociety.com',
         'https://editor.opencodingsociety.com',
         'https://frontend.opencodingsociety.com',
+        'https://deeds.opencodingsociety.com',
     ]
     # Allow additional CORS origins via environment variable (comma-separated)
     additional_origins = os.environ.get('CORS_ORIGINS', '')
