@@ -150,7 +150,7 @@ migrate = Migrate(app, db)
 
 
 # Image upload settings
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # maximum size of uploaded content
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # maximum size of uploaded content (10 MB) - must match nginx client_max_body_size
 app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif']  # supported file types
 app.config['UPLOAD_FOLDER'] = os.path.join(app.instance_path, 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

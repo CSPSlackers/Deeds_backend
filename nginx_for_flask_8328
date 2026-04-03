@@ -98,6 +98,15 @@ server {
     # Everything (except /socket.io/) goes to the Flask application on port 8328
     # ==============================================================================
     location / {
+        # ==============================================================================
+        # FILE UPLOAD SIZE LIMIT
+        # ==============================================================================
+        # Maximum request body size allowed by nginx (10 MB for image uploads)
+        # Must be >= Flask's MAX_CONTENT_LENGTH setting
+        # Default is 1MB, which is why larger uploads were getting 413 errors
+        # ==============================================================================
+        client_max_body_size 10M;
+        
         # CRITICAL LINE: Forward all requests to Flask on localhost:8328
         # localhost = this same server (internal communication only)
         # 8328 = the port where Flask is listening (configured in app.py or main.py)
