@@ -102,9 +102,19 @@ SESSION_COOKIE_NAME = os.environ.get('SESSION_COOKIE_NAME') or 'sess_python_flas
 JWT_TOKEN_NAME = os.environ.get('JWT_TOKEN_NAME') or 'jwt_python_flask'
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config['SESSION_COOKIE_NAME'] = SESSION_COOKIE_NAME
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-app.config['SESSION_COOKIE_SECURE'] = True  # Required for SameSite=None on HTTPS
-app.config['SESSION_COOKIE_DOMAIN'] = '.opencodingsociety.com'  # Allow all subdomains
+
+# Set cookie security based on environment
+if is_production:
+    # Production: HTTPS enabled, stricter cookie settings
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+    app.config['SESSION_COOKIE_SECURE'] = True  # Required for SameSite=None on HTTPS
+    app.config['SESSION_COOKIE_DOMAIN'] = '.opencodingsociety.com'  # Allow all subdomains
+else:
+    # Development: HTTP, relaxed cookie settings for localhost
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['SESSION_COOKIE_SECURE'] = False  # HTTP on localhost
+    app.config['SESSION_COOKIE_DOMAIN'] = None  # Allow localhost
+
 app.config['JWT_TOKEN_NAME'] = JWT_TOKEN_NAME
 
 
