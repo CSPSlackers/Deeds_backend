@@ -105,7 +105,7 @@ server {
         # Must be >= Flask's MAX_CONTENT_LENGTH setting
         # Default is 1MB, which is why larger uploads were getting 413 errors
         # ==============================================================================
-        client_max_body_size 10M;
+        client_max_body_size 500M;
         
         # CRITICAL LINE: Forward all requests to Flask on localhost:8328
         # localhost = this same server (internal communication only)
