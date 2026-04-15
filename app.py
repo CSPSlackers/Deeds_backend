@@ -4,9 +4,8 @@ from flask_cors import CORS
 from flask_restful import Api, Resource
 
 app = Flask(__name__)
-# Flask-CORS for local development only (port 8328)
-# Production CORS handled by nginx reverse proxy
-CORS(app, supports_credentials=True, origins=['http://localhost:8328', 'http://127.0.0.1:8328'])
+# Flask-CORS configuration for local development and production
+CORS(app, supports_credentials=True, origins=['http://localhost:8328', 'http://127.0.0.1:8328', 'https://deeds.opencodingsociety.com'])
 
 api = Api(app)
 

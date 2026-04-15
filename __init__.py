@@ -56,6 +56,8 @@ else:
         'http://127.0.0.1:4600',
         'http://localhost:4000',
         'http://127.0.0.1:4000',
+        'https://deeds.opencodingsociety.com',
+        'https://opencodingsociety.com',
     ]
     # Allow additional CORS origins via environment variable (comma-separated)
     additional_origins = os.environ.get('CORS_ORIGINS', '')
