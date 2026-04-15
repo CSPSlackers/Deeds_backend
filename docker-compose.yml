@@ -5,6 +5,8 @@ services:
                 build: .
                 env_file:
                         - .env # This file is optional; defaults will be used if it does not exist
+                environment:
+                        - IS_PRODUCTION=true
                 ports:
                         - "8328:8328"
                 volumes:
