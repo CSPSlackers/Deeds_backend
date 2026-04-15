@@ -31,21 +31,9 @@ login_manager.init_app(app)
 # Production CORS is handled by nginx (to avoid duplicate headers)
 is_production = os.environ.get('IS_PRODUCTION', 'false').lower() == 'true'
 
-if is_production:
-    # Production origins - allow opencodingsociety.com and subdomains
-    cors_origins = [
-        'https://opencodingsociety.com',
-        'https://www.opencodingsociety.com',
-        'https://dad.opencodingsociety.com',
-        'https://editor.opencodingsociety.com',
-        'https://frontend.opencodingsociety.com',
-        'https://deeds.opencodingsociety.com',
-    ]
-    # Allow additional CORS origins via environment variable (comma-separated)
-    additional_origins = os.environ.get('CORS_ORIGINS', '')
-    if additional_origins:
-        cors_origins.extend([origin.strip() for origin in additional_origins.split(',')])
-else:
+# Only enable Flask-CORS in development mode
+# In production, nginx handles all CORS headers to prevent duplication
+if not is_production:
     # Development origins
     cors_origins = [
         'http://localhost:4500',
@@ -64,12 +52,12 @@ else:
     if additional_origins:
         cors_origins.extend([origin.strip() for origin in additional_origins.split(',')])
 
-cors = CORS(
-   app,
-   supports_credentials=True,
-   origins=cors_origins,
-   methods=["GET", "POST", "PUT", "OPTIONS"]
-)
+    cors = CORS(
+       app,
+       supports_credentials=True,
+       origins=cors_origins,
+       methods=["GET", "POST", "PUT", "OPTIONS"]
+    )
 
 
 # Admin Defaults
