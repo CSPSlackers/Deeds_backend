@@ -146,9 +146,83 @@ def page_not_found(e):
     return render_template('404.html'), 404
 
 @app.route('/')  # connects default URL to index() function
+@login_required
 def index():
     print("Home:", current_user)
     return render_template("index.html")
+
+
+@app.route('/api/dashboard/stats')
+@login_required
+def dashboard_stats():
+    """Returns system statistics for the dashboard"""
+    from model.user import User
+    from model.submissions import Submissions
+    import os
+    import datetime
+    
+    try:
+        # User statistics
+        total_users = User.query.count()
+        admin_users = User.query.filter_by(role='Admin').count()
+        
+        # Submission statistics
+        total_submissions = Submissions.query.count()
+        
+        # Database size calculation (in MB)
+        db_size = 0
+        instance_path = 'instance/data'
+        uploads_path = 'instance/uploads'
+        
+        # Calculate instance/data directory size
+        if os.path.exists(instance_path):
+            for dirpath, dirnames, filenames in os.walk(instance_path):
+                for f in filenames:
+                    fp = os.path.join(dirpath, f)
+                    if os.path.exists(fp):
+                        db_size += os.path.getsize(fp)
+        
+        # Calculate uploads directory size
+        if os.path.exists(uploads_path):
+            for dirpath, dirnames, filenames in os.walk(uploads_path):
+                for f in filenames:
+                    fp = os.path.join(dirpath, f)
+                    if os.path.exists(fp):
+                        db_size += os.path.getsize(fp)
+        
+        db_size_mb = round(db_size / (1024 * 1024), 2)
+        
+        # Get last user created
+        last_user = User.query.order_by(User.id.desc()).first()
+        last_user_created = last_user.id if last_user else 'N/A'
+        
+        # System status
+        is_running = True
+        uptime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Get sample recent errors/activity (from database or logs)
+        recent_errors = []
+        # You can expand this to pull from actual error logs if you have them
+        
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'total_users': total_users,
+                'admin_users': admin_users,
+                'total_submissions': total_submissions,
+                'database_size_mb': db_size_mb,
+                'last_user_id': last_user_created,
+                'system_status': 'Online' if is_running else 'Offline',
+                'last_activity': uptime,
+                'recent_errors': recent_errors,
+                'active_now': current_user.name
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 
 
 
@@ -175,6 +249,15 @@ def submissions_table():
 def persona():
     personas = Persona.query.all()
     return render_template("persona.html", personas=personas)
+
+@app.route('/carousel-manager/')
+@login_required
+def carousel_editor():
+    """Carousel management editor page"""
+    # Check if user is admin
+    if current_user.role != 'Admin':
+        return redirect(url_for('index'))
+    return render_template("carousel.html")
 
 # Helper function to extract uploads for a user (ie PFP image)
 @app.route('/uploads/<path:filename>')

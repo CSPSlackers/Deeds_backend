@@ -1,42 +1,167 @@
 {% extends "layouts/base.html" %}
 {% set project = "Login" %}
 
+{% block style %}
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--mocha-white) 0%, #F2EDE9 100%);
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+        }
+
+        .login-card {
+            background: var(--light-text);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem 2rem;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header img {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 1rem;
+        }
+
+        .login-header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin: 0;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--dark-text);
+            font-size: 0.95rem;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background-color: var(--mocha-white);
+            color: var(--dark-text);
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="password"]:focus {
+            outline: none;
+            border-color: var(--soft-red);
+            box-shadow: 0 0 0 3px rgba(200, 86, 86, 0.1);
+        }
+
+        .alert-error {
+            background-color: #FDE8E8;
+            color: #C85656;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #C85656;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .alert-success {
+            background-color: #E8F5E9;
+            color: #4CAF50;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #4CAF50;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .submit-btn {
+            background-color: var(--soft-red);
+            color: var(--light-text);
+            padding: 0.85rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--hover-red);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(200, 86, 86, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .hidden-input {
+            display: none;
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
-    <!-- Start of body content specific to page -->
-    <div class="px-5 py-5 mx-auto">
-        <div class="container py-4">
-            <header class="pb-3 mb-4 border-bottom border-primary text-light">
-                <span class="fs-4">Login Page</span>
-            </header>
-        </div>
-    
-        <div class="container py-4 text-light bg-primary">
-    
-            <div class="container bg-secondary py-4">
-                <div class="p-5 mb-4 bg-light text-dark rounded-3">
-                    <form name="f" action="{{ url_for('login') }}" method="POST">
-                        <table>
-                            {% if error %}
-                                <tr class="alert alert-error">
-                                    Invalid username and password.
-                                </tr>
-                            {% endif %}
-                            {% if logout %}
-                                <tr class="alert alert-success">
-                                    You have been logged out.
-                                </tr>
-                            {% endif %}
-                            <tr><th><label for="username">User ID</label></th></tr>
-                            <tr><td><input id='username' name="username" size="20" required></td></tr>
-                            <tr><th><label for="password">Password</label></th></tr>
-                            <tr><td><input type="password" id="password" name="password" size="20" required></td></tr>
-                            <!-- Hidden input for 'next' page, which is set on unauthorized redirects -->
-                            <input type="hidden" name="next" value="{{ next }}">
-                            <tr><th><input type="submit" value="Submit"></th></tr>
-                        </table>
-                    </form>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="{{ url_for('static', filename='assets/ncs_logo.png') }}" alt="Logo">
+                <h1>DEEDS</h1>
+            </div>
+
+            <form name="f" action="{{ url_for('login') }}" method="POST" class="login-form">
+                {% if error %}
+                    <div class="alert-error">
+                        ⚠️ Invalid username and password.
+                    </div>
+                {% endif %}
+                
+                {% if logout %}
+                    <div class="alert-success">
+                        ✓ You have been logged out.
+                    </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="username">User ID</label>
+                    <input id="username" name="username" type="text" required placeholder="Enter your user ID">
                 </div>
 
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" required placeholder="Enter your password">
+                </div>
+
+                <input type="hidden" name="next" value="{{ next }}" class="hidden-input">
+                
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
         </div>
     </div>
 {% endblock %}

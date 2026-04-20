@@ -34,10 +34,188 @@ This HTML is setup as as a Jinja2 layout, coders use layouts for:
     {% endblock %}
       
     <style>
-        .navbar {
-            position: static;
-            z-index: 9999;
+        :root {
+            --mocha-white: #F5F1EE;
+            --soft-red: #C85656;
+            --dark-text: #2C2C2C;
+            --light-text: #FFFFFF;
+            --border-color: #E8E3E0;
+            --hover-red: #B74545;
         }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--mocha-white);
+            color: var(--dark-text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 250px;
+            background-color: var(--dark-text);
+            padding: 2rem 0;
+            z-index: 1000;
+            overflow-y: auto;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-brand {
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 2px solid var(--soft-red);
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-brand img {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-brand a {
+            color: var(--light-text);
+            text-decoration: none;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin: 0;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            color: var(--light-text);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .sidebar-menu a:hover {
+            background-color: var(--soft-red);
+            padding-left: 2rem;
+        }
+
+        .sidebar-menu a i {
+            width: 20px;
+            margin-right: 1rem;
+            text-align: center;
+        }
+
+        .main-container {
+            margin-left: 250px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background-color: var(--light-text);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .top-bar-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-profile .dropdown-toggle {
+            color: var(--dark-text);
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .user-profile .dropdown-toggle:hover {
+            color: var(--soft-red);
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .logout-btn {
+            background-color: var(--soft-red);
+            color: var(--light-text);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .logout-btn:hover {
+            background-color: var(--hover-red);
+            color: var(--light-text);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            .main-container {
+                margin-left: 200px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .sidebar {
+                width: 100px;
+                padding: 1rem 0;
+            }
+            .main-container {
+                margin-left: 100px;
+            }
+            .sidebar-brand {
+                padding: 1rem;
+            }
+            .sidebar-menu a {
+                padding: 1rem 0.5rem;
+                justify-content: center;
+            }
+            .sidebar-menu a span {
+                display: none;
+            }
+            .top-bar {
+                padding: 1rem;
+            }
+            .content-area {
+                padding: 1rem;
+            }
+        }
+
+        /* Login page specific styles will override these */
         #body_background {
             position: fixed;
             top: 0;
@@ -57,28 +235,42 @@ This HTML is setup as as a Jinja2 layout, coders use layouts for:
 <body>
     <div id="body_background"></div>
 
-    {% include "layouts/navbar.html" %}
+    <!-- Sidebar for authenticated users -->
+    {% if current_user.is_authenticated and request.endpoint != 'login' %}
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <img src="{{ url_for('static', filename='assets/ncs_logo.png') }}" alt="Logo">
+            <a href="{{ url_for('index') }}">DEEDS</a>
+        </div>
+        <nav class="sidebar-menu">
+            <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> <span>Home</span></a></li>
+            <li><a href="{{ url_for('u2table') }}"><i class="fas fa-users"></i> <span>Users</span></a></li>
+            <li><a href="{{ url_for('submissions_table') }}"><i class="fas fa-file-upload"></i> <span>Submissions</span></a></li>
+            {% if current_user.is_admin() %}
+            <li><a href="{{ url_for('carousel_editor') }}"><i class="fas fa-images"></i> <span>Carousel</span></a></li>
+            {% endif %}
+            <li><a href="{{ url_for('persona') }}"><i class="fas fa-user-circle"></i> <span>Personas</span></a></li>
+        </nav>
+    </aside>
 
-    {% block body %}
-    {% endblock %}
+    <div class="main-container">
+        <div class="top-bar">
+            <h2 class="top-bar-title">{{ project }}</h2>
+            <div class="user-profile">
+                <span>{{ current_user.name }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+            </div>
+        </div>
+        <div class="content-area">
+    {% endif %}
+
+    {% block body %}{% endblock %}
+
+    {% if current_user.is_authenticated and request.endpoint != 'login' %}
+        </div>
+    </div>
+    {% endif %}
 
 </body>
-
-{% block background %}
-    <script src="{{ url_for('static', filename='js/three.r119.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/vanta.birds.min.js') }}"></script>
-    <script>
-        VANTA.BIRDS({
-            el: "#body_background",
-            mouseControls: true,
-            touchControls: true,
-            gyroControls: false,
-            minHeight: 200.00,
-            minWidth: 200.00,
-            scale: 1.00,
-            scaleMobile: 1.00
-        })
-    </script>
-{% endblock %}
 
 </html>

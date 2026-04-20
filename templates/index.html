@@ -1,64 +1,363 @@
 {% extends "layouts/base.html" %}
 {% set project = "Home" %}
 
+{% block style %}
+    <style>
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .welcome-section {
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .welcome-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-header p {
+            font-size: 1.1rem;
+            color: #666;
+            margin: 0;
+        }
+
+        .refresh-btn {
+            background-color: var(--soft-red);
+            color: var(--light-text);
+            border: none;
+            padding: 0.7rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-btn:hover {
+            background-color: var(--hover-red);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(200, 86, 86, 0.3);
+        }
+
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+
+        .refresh-btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .refresh-btn i {
+            transition: transform 0.6s ease;
+        }
+
+        .refresh-btn.loading i {
+            transform: rotate(360deg);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--light-text);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            border-color: var(--soft-red);
+        }
+
+        .stat-card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card-icon {
+            font-size: 2rem;
+            color: var(--soft-red);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(200, 86, 86, 0.1);
+            border-radius: 10px;
+        }
+
+        .stat-card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        .stat-card-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin: 0.5rem 0 0 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-card-subtitle {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 0.5rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #4caf50;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .info-section {
+            background: var(--light-text);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-section h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-section h2 i {
+            color: var(--soft-red);
+        }
+
+        .info-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .info-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-list li:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: var(--dark-text);
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .loading {
+            text-align: center;
+            color: #999;
+            padding: 2rem;
+        }
+
+        .error-message {
+            background-color: #FDE8E8;
+            color: var(--soft-red);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--soft-red);
+            margin-bottom: 2rem;
+        }
+
+        .success-badge {
+            display: inline-block;
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
-    <!-- Start of body content specific to page -->
-    <div class="px-5 py-5 mx-auto">
-        <h1 class="text-white"><strong>Python Home Page</strong></h1>
-        <div class="row">
-            <div class="col-4">
-                <div class="card">
-                    <img class="card-img-top" src="{{ url_for('static', filename='assets/python.jpeg') }}" alt="Python Development" height="250">
-                    <div class="card-body">
-                    <h5 class="card-title">What should <mark>Student Developers learn</mark>?</h5>
-                    <p class="card-text">
-                        <ol>
-                            <li>Python 3.12 is used for most of our backend PBL. HTML, CSS, JavaScript will be used in frontend</li>
-                            <li>Visuals Studio Code (VS Code) is the primary editor, Interactive Development Environment (IDE).</li>
-                            <li>GitHub.  Managing and sharing code change, branches, pull requests, issues, and more will be through GitHub.</li>
-                            <li>DevOps. Python programmers should have a passion for managing the environment and learning automation (Git, Linux, Bash, Python Packages, Docker).</li>
-                            <li>API and Microservice using Flask.  Mastering development techniques in creating and consuming RESTful APIs</li>
-                        </ol>
-                    </p>
-                    <a href="#" class="btn btn-primary">Go somewhere</a>
-                    </div>
-                </div>
+    <div class="dashboard-container">
+        <div class="welcome-section">
+            <div class="welcome-header">
+                <h1>Dashboard</h1>
+                <p>System overview and statistics</p>
             </div>
-            <div class="col-4">
-                <div class="card">
-                    <img class="card-img-top" src="{{ url_for('static', filename='assets/flask.png') }}" alt="Flask Development" height="250">
-                    <div class="card-body">
-                    <h5 class="card-title">What is <mark>Flask</mark>? How do I start Web development?</h5>
-                    <p class="card-text">
-                        <ol>
-                            <li>Flask Framework is the popular Web Application development framework of Python.</li>
-                            <li>Blueprint is Python technique to help abstract complexity, moving information into independent files and directories. Blueprints are intended to encapsulate feature-sized sections of our application into well organized files.</li>
-                            <li>HTML using Bootstrap is a great way to build interesting pages and reduce CSS</li>
-                            <li>Jinja2 is a server-side Python like template engine, supports HTML5 web development, and provides full integration with Flask.</li>
-                        </ol>
-                    </p>
-                    <a href="#" class="btn btn-primary">Go somewhere</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-4">
-                <div class="card">
-                    <img class="card-img-top" src="{{ url_for('static', filename='assets/pythondb.png') }}" alt="Backend and Persistence" height="250">
-                    <div class="card-body">
-                    <h5 class="card-title">How do you manage <mark>Persistent data</mark> with Python?</h5>
-                    <p class="card-text">
-                        <ol>
-                            <li>A Database is an example of persistent data that is held on a computer.  Programming languages and frameworks allow you to store and retrive data.</li>
-                            <li>SQL stands for Structured Query Language · SQL lets you access and manipulate databases and has become a long lasting development standard.</li>
-                            <li>SQLAlchemy is the Python SQL toolkit and Object Relational Mapper (ORM) that gives application developers the full power and flexibility of SQL.</li>
-                            <li>There are many newer and sometimes easier Database languages and frameworks.  Mongo, DynamoDB, Neo4J are Databases being used by students developers in last 3 years.</li>
-                        </ol>
-                    </p>
-                    <a href="#" class="btn btn-primary">Go somewhere</a>
-                    </div>
-                </div>
-            </div>
-            
+            <button id="refreshBtn" class="refresh-btn" title="Refresh statistics">
+                <i class="fas fa-sync-alt"></i>
+                <span>Refresh</span>
+            </button>
+        </div>
+
+        <div id="stats-container" class="loading">
+            <p>Loading statistics...</p>
         </div>
     </div>
+
+    <script>
+        // Fetch and display dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch('/api/dashboard/stats');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    const data = result.data;
+                    const statsHTML = `
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-card-header">
+                                    <div class="stat-card-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                </div>
+                                <h3 class="stat-card-title">Total Users</h3>
+                                <p class="stat-card-value">${data.total_users}</p>
+                                <p class="stat-card-subtitle">${data.admin_users} admins</p>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-card-header">
+                                    <div class="stat-card-icon">
+                                        <i class="fas fa-file-upload"></i>
+                                    </div>
+                                </div>
+                                <h3 class="stat-card-title">Submissions</h3>
+                                <p class="stat-card-value">${data.total_submissions}</p>
+                                <p class="stat-card-subtitle">All time</p>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-card-header">
+                                    <div class="stat-card-icon">
+                                        <i class="fas fa-database"></i>
+                                    </div>
+                                </div>
+                                <h3 class="stat-card-title">Data Used</h3>
+                                <p class="stat-card-value">${data.database_size_mb}</p>
+                                <p class="stat-card-subtitle">MB</p>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-card-header">
+                                    <div class="stat-card-icon">
+                                        <i class="fas fa-server"></i>
+                                    </div>
+                                </div>
+                                <h3 class="stat-card-title">System Status</h3>
+                                <p class="stat-card-value">
+                                    <span class="status-indicator"></span>
+                                    <span class="success-badge">${data.system_status}</span>
+                                </p>
+                                <p class="stat-card-subtitle">All systems operational</p>
+                            </div>
+                        </div>
+
+                        <div class="info-section">
+                            <h2><i class="fas fa-info-circle"></i> System Information</h2>
+                            <ul class="info-list">
+                                <li>
+                                    <span class="info-label">Last Activity</span>
+                                    <span class="info-value">${new Date(data.last_activity).toLocaleString()}</span>
+                                </li>
+                                <li>
+                                    <span class="info-label">Last User ID Created</span>
+                                    <span class="info-value">${data.last_user_id}</span>
+                                </li>
+                                <li>
+                                    <span class="info-label">Database Integrity</span>
+                                    <span class="info-value"><span class="success-badge">Healthy</span></span>
+                                </li>
+                            </ul>
+                        </div>
+                    `;
+                    
+                    document.getElementById('stats-container').innerHTML = statsHTML;
+                } else {
+                    throw new Error(result.message || 'Failed to load statistics');
+                }
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+                document.getElementById('stats-container').innerHTML = `
+                    <div class="error-message">
+                        <strong>Error:</strong> Failed to load dashboard statistics. Please try refreshing the page.
+                    </div>
+                `;
+            }
+        }
+
+        // Handle refresh button click
+        function setupRefreshButton() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', async function() {
+                    this.classList.add('loading');
+                    await loadDashboardStats();
+                    this.classList.remove('loading');
+                });
+            }
+        }
+
+        // Load stats when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardStats();
+            setupRefreshButton();
+        });
+    </script>
 {% endblock %}

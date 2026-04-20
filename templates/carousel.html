@@ -1,0 +1,784 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Carousel Manager{% endblock %}
+
+{% block style %}
+<style>
+    .container-fluid {
+        width: 100%;
+        padding: 2rem;
+    }
+
+    .carousel-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .carousel-section {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .carousel-section h3 {
+        color: var(--dark-text);
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .carousel-section .badge {
+        background-color: var(--soft-red);
+        color: white;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .search-box {
+        margin-bottom: 1rem;
+        position: relative;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 0.75rem 2rem 0.75rem 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: border-color 0.2s;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--soft-red);
+        box-shadow: 0 0 0 2px rgba(200, 86, 86, 0.1);
+    }
+
+    .search-box .fa-search {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--border-color);
+        pointer-events: none;
+    }
+
+    .submissions-list {
+        max-height: 600px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .submission-item {
+        background: var(--mocha-white);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .submission-item:hover {
+        border-color: var(--soft-red);
+        background: #faf8f6;
+        box-shadow: 0 2px 6px rgba(200, 86, 86, 0.1);
+    }
+
+    .submission-item.in-carousel {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .submission-item.in-carousel:hover {
+        border-color: var(--border-color);
+        background: var(--mocha-white);
+        box-shadow: none;
+    }
+
+    .submission-thumbnail {
+        width: 50px;
+        height: 50px;
+        border-radius: 6px;
+        background-color: var(--border-color);
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .submission-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .submission-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .submission-number {
+        font-weight: 600;
+        color: var(--dark-text);
+        font-size: 0.9rem;
+    }
+
+    .submission-meta {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 0.25rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+
+    .submission-action {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        border: none;
+        background-color: var(--soft-red);
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+
+    .submission-action:hover {
+        background-color: var(--hover-red);
+        transform: scale(1.05);
+    }
+
+    .submission-action:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .carousel-item {
+        background: var(--mocha-white);
+        border: 2px solid var(--soft-red);
+        border-radius: 8px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        position: relative;
+    }
+
+    .carousel-position {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--soft-red);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .carousel-drag-handle {
+        cursor: grab;
+        color: var(--soft-red);
+        font-size: 1.2rem;
+        cursor: grab;
+    }
+
+    .carousel-drag-handle:active {
+        cursor: grabbing;
+    }
+
+    .carousel-item.dragging {
+        opacity: 0.5;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #999;
+    }
+
+    .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--border-color);
+    }
+
+    .empty-state p {
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .carousel-limit-warning {
+        background-color: #fff3cd;
+        border: 1px solid #ffc107;
+        color: #856404;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+        display: none;
+        font-size: 0.9rem;
+    }
+
+    .carousel-limit-warning.show {
+        display: block;
+    }
+
+    .carousel-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-clear-all {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .btn-clear-all:hover {
+        background-color: #c82333;
+    }
+
+    .search-filters {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .search-filters label {
+        font-size: 0.85rem;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+    }
+
+    .search-filters select {
+        padding: 0.4rem 0.6rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+
+    @media (max-width: 1200px) {
+        .carousel-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .carousel-container {
+            gap: 1rem;
+        }
+
+        .carousel-section {
+            padding: 1rem;
+        }
+
+        .submission-item {
+            padding: 0.75rem;
+        }
+
+        .submissions-list {
+            max-height: 400px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="color: var(--dark-text); font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
+            <i class="fas fa-images" style="color: var(--soft-red); margin-right: 0.75rem;"></i>Carousel Manager
+        </h1>
+        <p style="color: #666; margin: 0;">Manage featured submissions in the carousel (max 10)</p>
+    </div>
+
+    <div class="carousel-container">
+        <!-- Available Submissions Section -->
+        <div class="carousel-section">
+            <h3>
+                <i class="fas fa-inbox"></i>Available Submissions
+                <span class="badge" id="availableCount">0</span>
+            </h3>
+            
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="searchAvailable" 
+                    placeholder="Search submissions..." 
+                    aria-label="Search available submissions"
+                >
+                <i class="fas fa-search"></i>
+            </div>
+
+            <div class="search-filters">
+                <label>
+                    Filter by:
+                    <select id="filterCategory" style="min-width: 140px;">
+                        <option value="">All Categories</option>
+                        <option value="project">Project</option>
+                        <option value="assignment">Assignment</option>
+                        <option value="exam">Exam</option>
+                        <option value="other">Other</option>
+                    </select>
+                </label>
+            </div>
+
+            <div id="availableSubmissions" class="submissions-list">
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Loading submissions...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Carousel Section -->
+        <div class="carousel-section">
+            <h3>
+                <i class="fas fa-star"></i>Active Carousel
+                <span class="badge" id="carouselCount">0</span>
+            </h3>
+
+            <div class="carousel-limit-warning" id="limitWarning">
+                <i class="fas fa-exclamation-circle" style="margin-right: 0.5rem;"></i>
+                Carousel is at maximum capacity (10 items)
+            </div>
+
+            <div id="activeCarousel" class="submissions-list">
+                <div class="empty-state">
+                    <i class="fas fa-star"></i>
+                    <p>No submissions in carousel yet. Add some from the left!</p>
+                </div>
+            </div>
+
+            <div class="carousel-actions" id="carouselActions" style="display: none;">
+                <button class="btn-action btn-clear-all" onclick="clearCarousel()">
+                    <i class="fas fa-trash"></i> Clear All
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // State management
+    let allSubmissions = [];
+    let carouselItems = [];
+    const MAX_CAROUSEL_SIZE = 10;
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', async function() {
+        await loadSubmissions();
+        await loadCarousel();
+        setupEventListeners();
+    });
+
+    // Load all approved submissions
+    async function loadSubmissions() {
+        try {
+            const response = await fetch('/submit/?all=true', {
+                method: 'GET',
+                credentials: 'include', // Include cookies for session auth
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) throw new Error('Failed to load submissions');
+            
+            const submissions = await response.json();
+            // All submissions are available for carousel (no status field)
+            allSubmissions = submissions || [];
+            
+            renderAvailableSubmissions(allSubmissions);
+        } catch (error) {
+            console.error('Error loading submissions:', error);
+            document.getElementById('availableSubmissions').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Failed to load submissions</p>
+                </div>
+            `;
+        }
+    }
+
+    // Load carousel items
+    async function loadCarousel() {
+        try {
+            const response = await fetch('/carousel', {
+                method: 'GET',
+                credentials: 'include', // Include cookies for session auth
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) throw new Error('Failed to load carousel');
+            
+            carouselItems = await response.json() || [];
+            renderCarousel();
+            updateBadges();
+        } catch (error) {
+            console.error('Error loading carousel:', error);
+        }
+    }
+
+    // Render available submissions
+    function renderAvailableSubmissions(submissions) {
+        const container = document.getElementById('availableSubmissions');
+        
+        if (submissions.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>No available submissions</p>
+                </div>
+            `;
+            return;
+        }
+
+        const isCarouselFull = carouselItems.length >= MAX_CAROUSEL_SIZE;
+
+        container.innerHTML = submissions.map(submission => {
+            const inCarousel = carouselItems.some(c => c.submission_id === submission.id);
+            const canAdd = !inCarousel && !isCarouselFull;
+            
+            // Get title from content (might be JSON or string)
+            let title = 'Untitled';
+            if (submission.content) {
+                if (typeof submission.content === 'string') {
+                    title = submission.content.substring(0, 50);
+                } else if (submission.content.title) {
+                    title = submission.content.title;
+                } else if (submission.content.text) {
+                    title = submission.content.text.substring(0, 50);
+                }
+            }
+
+            return `
+                <div class="submission-item ${inCarousel ? 'in-carousel' : ''}" data-id="${submission.id}">
+                    <div class="submission-thumbnail">
+                        ${submission.image ? `<img src="data:image/jpeg;base64,${submission.image}" alt="Submission">` : '<i class="fas fa-image" style="font-size: 2rem; color: var(--border-color); display: flex; align-items: center; justify-content: center; height: 100%;"></i>'}
+                    </div>
+                    <div class="submission-info">
+                        <div class="submission-number">#${submission.id} - ${title}</div>
+                        <div class="submission-meta">
+                            <span><strong>By:</strong> ${submission.user_name || submission.user_id || 'N/A'}</span>
+                            <span><strong>Category:</strong> ${submission.category || 'N/A'}</span>
+                        </div>
+                    </div>
+                    <button 
+                        class="submission-action ${inCarousel ? 'remove-btn' : 'add-btn'}"
+                        onclick="${inCarousel ? `removeFromCarousel(${submission.id})` : `addToCarousel(${submission.id})`}"
+                        ${inCarousel ? 'title="Remove from carousel"' : (canAdd ? 'title="Add to carousel"' : 'title="Carousel is full"')}
+                        ${!canAdd && !inCarousel ? 'disabled' : ''}
+                    >
+                        <i class="fas ${inCarousel ? 'fa-times' : 'fa-plus'}"></i>
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Render carousel items with drag functionality
+    function renderCarousel() {
+        const container = document.getElementById('activeCarousel');
+        
+        if (carouselItems.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-star"></i>
+                    <p>No submissions in carousel yet. Add some from the left!</p>
+                </div>
+            `;
+            document.getElementById('carouselActions').style.display = 'none';
+            return;
+        }
+
+        container.innerHTML = carouselItems.map((item, index) => {
+            const submission = item.submission;
+            
+            // Get title from content (might be JSON or string)
+            let title = 'Untitled';
+            if (submission.content) {
+                if (typeof submission.content === 'string') {
+                    title = submission.content.substring(0, 50);
+                } else if (submission.content.title) {
+                    title = submission.content.title;
+                } else if (submission.content.text) {
+                    title = submission.content.text.substring(0, 50);
+                }
+            }
+
+            return `
+                <div class="carousel-item" draggable="true" data-carousel-id="${item.carousel_id}" data-position="${index}">
+                    <div class="carousel-position">${index + 1}</div>
+                    <div class="carousel-drag-handle" title="Drag to reorder">
+                        <i class="fas fa-grip-vertical"></i>
+                    </div>
+                    <div class="submission-thumbnail">
+                        ${submission.image ? `<img src="data:image/jpeg;base64,${submission.image}" alt="Submission">` : '<i class="fas fa-image"></i>'}
+                    </div>
+                    <div class="submission-info" style="flex: 1;">
+                        <div class="submission-number">#${submission.id} - ${title}</div>
+                        <div class="submission-meta">
+                            <span><strong>By:</strong> ${submission.user_name || submission.user_id || 'N/A'}</span>
+                            <span><strong>Added:</strong> ${new Date(item.added_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    <button 
+                        class="submission-action remove-btn"
+                        onclick="removeFromCarousel(${submission.id})"
+                        title="Remove from carousel"
+                    >
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        document.getElementById('carouselActions').style.display = carouselItems.length > 0 ? 'flex' : 'none';
+        setupDragAndDrop();
+    }
+
+    // Add submission to carousel
+    async function addToCarousel(submissionId) {
+        try {
+            const response = await fetch(`/carousel/add/${submissionId}`, {
+                method: 'POST',
+                credentials: 'include', // Include cookies for session auth
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                await loadCarousel();
+                renderAvailableSubmissions(filterSubmissions());
+            } else {
+                const error = await response.json();
+                alert(error.message || 'Failed to add to carousel');
+            }
+        } catch (error) {
+            console.error('Error adding to carousel:', error);
+            alert('Error adding to carousel');
+        }
+    }
+
+    // Remove submission from carousel
+    async function removeFromCarousel(submissionId) {
+        try {
+            const response = await fetch(`/carousel/remove-submission/${submissionId}`, {
+                method: 'DELETE',
+                credentials: 'include', // Include cookies for session auth
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                await loadCarousel();
+                renderAvailableSubmissions(filterSubmissions());
+            } else {
+                const error = await response.json();
+                alert(error.message || 'Failed to remove from carousel');
+            }
+        } catch (error) {
+            console.error('Error removing from carousel:', error);
+            alert('Error removing from carousel');
+        }
+    }
+
+    // Clear all carousel items
+    async function clearCarousel() {
+        if (!confirm('Are you sure you want to remove all submissions from the carousel?')) {
+            return;
+        }
+
+        try {
+            for (const item of carouselItems) {
+                await fetch(`/carousel/remove/${item.carousel_id}`, {
+                    method: 'DELETE',
+                    credentials: 'include', // Include cookies for session auth
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+            }
+
+            await loadCarousel();
+            renderAvailableSubmissions(filterSubmissions());
+        } catch (error) {
+            console.error('Error clearing carousel:', error);
+            alert('Error clearing carousel');
+        }
+    }
+
+    // Setup event listeners for search and filter
+    function setupEventListeners() {
+        document.getElementById('searchAvailable').addEventListener('input', function() {
+            renderAvailableSubmissions(filterSubmissions());
+        });
+
+        document.getElementById('filterCategory').addEventListener('change', function() {
+            renderAvailableSubmissions(filterSubmissions());
+        });
+    }
+
+    // Filter submissions based on search and category
+    function filterSubmissions() {
+        const searchText = document.getElementById('searchAvailable').value.toLowerCase();
+        const categoryFilter = document.getElementById('filterCategory').value;
+
+        return allSubmissions.filter(submission => {
+            const matchesSearch = 
+                submission.id.toString().includes(searchText) ||
+                (submission.title || '').toLowerCase().includes(searchText) ||
+                submission.user_id.toString().includes(searchText) ||
+                (submission.category || '').toLowerCase().includes(searchText);
+
+            const matchesCategory = !categoryFilter || submission.category === categoryFilter;
+
+            return matchesSearch && matchesCategory;
+        });
+    }
+
+    // Update badges
+    function updateBadges() {
+        document.getElementById('availableCount').textContent = allSubmissions.filter(
+            s => !carouselItems.some(c => c.submission_id === s.id)
+        ).length;
+        document.getElementById('carouselCount').textContent = carouselItems.length;
+
+        // Show warning if carousel is full
+        const limitWarning = document.getElementById('limitWarning');
+        if (carouselItems.length >= MAX_CAROUSEL_SIZE) {
+            limitWarning.classList.add('show');
+        } else {
+            limitWarning.classList.remove('show');
+        }
+    }
+
+    // Drag and drop functionality
+    let draggedElement = null;
+
+    function setupDragAndDrop() {
+        const items = document.querySelectorAll('.carousel-item');
+
+        items.forEach(item => {
+            item.addEventListener('dragstart', function(e) {
+                draggedElement = this;
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            item.addEventListener('dragend', function(e) {
+                this.classList.remove('dragging');
+                draggedElement = null;
+            });
+
+            item.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (this !== draggedElement) {
+                    this.style.opacity = '0.5';
+                }
+            });
+
+            item.addEventListener('dragleave', function(e) {
+                this.style.opacity = '1';
+            });
+
+            item.addEventListener('drop', async function(e) {
+                e.preventDefault();
+                this.style.opacity = '1';
+
+                if (this !== draggedElement) {
+                    // Reorder carousel items
+                    const newOrder = Array.from(document.querySelectorAll('.carousel-item')).map((el, idx) => {
+                        if (el === draggedElement) return this.dataset.carouselId;
+                        if (el === this) return draggedElement.dataset.carouselId;
+                        return el.dataset.carouselId;
+                    });
+
+                    // Swap positions
+                    const draggedPos = parseInt(draggedElement.dataset.position);
+                    const targetPos = parseInt(this.dataset.position);
+                    [carouselItems[draggedPos], carouselItems[targetPos]] = [carouselItems[targetPos], carouselItems[draggedPos]];
+
+                    // Send new order to server
+                    await reorderCarousel();
+                    renderCarousel();
+                }
+            });
+        });
+    }
+
+    // Reorder carousel on server
+    async function reorderCarousel() {
+        try {
+            const order = carouselItems.map(item => item.carousel_id);
+
+            const response = await fetch('/carousel/reorder', {
+                method: 'PUT',
+                credentials: 'include', // Include cookies for session auth
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ order: order })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to reorder carousel');
+            }
+
+            const result = await response.json();
+            carouselItems = result;
+            updateBadges();
+        } catch (error) {
+            console.error('Error reordering carousel:', error);
+            await loadCarousel(); // Reload on error
+        }
+    }
+</script>
+{% endblock %}
