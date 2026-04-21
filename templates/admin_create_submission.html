@@ -1,0 +1,582 @@
+{% extends "layouts/base.html" %}
+
+{% block style %}
+<style>
+    .submission-form-container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .form-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .form-header h1 {
+        font-size: 2rem;
+        color: var(--dark-text);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-header p {
+        color: #666;
+        font-size: 1.1rem;
+    }
+
+    .form-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--dark-text);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-input,
+    .form-textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 1rem;
+        color: var(--dark-text);
+        background-color: #FFF;
+        transition: all 0.3s ease;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+        outline: none;
+        border-color: var(--soft-red);
+        box-shadow: 0 0 0 3px rgba(200, 86, 86, 0.1);
+    }
+
+    .form-textarea {
+        resize: vertical;
+        min-height: 120px;
+        font-family: inherit;
+    }
+
+    .char-counter {
+        font-size: 0.8rem;
+        color: #999;
+        margin-top: 0.25rem;
+        text-align: right;
+    }
+
+    .char-counter.warning {
+        color: var(--soft-red);
+        font-weight: 600;
+    }
+
+    .image-upload-area {
+        border: 2px dashed var(--border-color);
+        border-radius: 6px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-color: #FAFAFA;
+    }
+
+    .image-upload-area:hover {
+        border-color: var(--soft-red);
+        background-color: #FFF5F5;
+    }
+
+    .image-upload-area.dragging {
+        border-color: var(--soft-red);
+        background-color: rgba(200, 86, 86, 0.05);
+        box-shadow: inset 0 0 0 2px var(--soft-red);
+    }
+
+    .image-upload-area div:first-child {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .upload-text {
+        font-weight: 600;
+        color: var(--dark-text);
+        margin-bottom: 0.25rem;
+    }
+
+    .upload-hint {
+        font-size: 0.85rem;
+        color: #999;
+    }
+
+    .image-preview {
+        display: none;
+        margin-top: 1rem;
+        position: relative;
+    }
+
+    .image-preview img {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 4px;
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-delete {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background-color: var(--soft-red);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-delete:hover {
+        background-color: var(--hover-red);
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: none;
+        border-radius: 4px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-submit {
+        background-color: var(--soft-red);
+        color: white;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+        background-color: var(--hover-red);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(200, 86, 86, 0.2);
+    }
+
+    .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-cancel {
+        background-color: var(--border-color);
+        color: var(--dark-text);
+    }
+
+    .btn-cancel:hover {
+        background-color: #D8D3D0;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 4px;
+        margin-bottom: 1.5rem;
+        display: none;
+    }
+
+    .alert.success {
+        background-color: #D4EDDA;
+        border: 1px solid #C3E6CB;
+        color: #155724;
+        display: block;
+    }
+
+    .alert.error {
+        background-color: #F8D7DA;
+        border: 1px solid #F5C6CB;
+        color: #721C24;
+        display: block;
+    }
+
+    .alert.hidden {
+        display: none;
+    }
+
+    .admin-note {
+        background-color: #E8F4F8;
+        border-left: 4px solid #2196F3;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        color: #01579B;
+    }
+
+    .admin-note strong {
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    @media (max-width: 600px) {
+        .submission-form-container {
+            padding: 1rem;
+        }
+
+        .form-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="submission-form-container">
+    <div class="form-header">
+        <h1>✨ Create a Deed</h1>
+        <p>Add a new deed to celebrate exceptional actions</p>
+    </div>
+
+    <div class="admin-note">
+        <strong>⚙️ Admin Action</strong>
+        You are creating a deed on behalf of a user. This deed will be attributed to the selected user.
+    </div>
+
+    <div id="alertMessage" class="alert"></div>
+
+    <form id="createSubmissionForm">
+        <!-- User Selection -->
+        <div class="form-section">
+            <label class="form-label">USER</label>
+            <select id="userSelect" class="form-input" required>
+                <option value="">Select a user...</option>
+                <!-- Populated by JavaScript -->
+            </select>
+        </div>
+
+        <!-- Category Selection -->
+        <div class="form-section">
+            <label class="form-label">CATEGORY</label>
+            <select id="categorySelect" class="form-input" required>
+                <option value="">Select a category...</option>
+                <option value="volunteer">Volunteer</option>
+                <option value="charity">Charity</option>
+                <option value="environmental">Environmental</option>
+                <option value="mentoring">Mentoring</option>
+                <option value="community">Community</option>
+                <option value="fundraising">Fundraising</option>
+                <option value="cleanup">Cleanup</option>
+                <option value="donation">Donation</option>
+                <option value="support">Support</option>
+                <option value="Misc">Miscellaneous</option>
+            </select>
+        </div>
+
+        <!-- Description -->
+        <div class="form-section">
+            <label class="form-label">DESCRIPTION</label>
+            <textarea id="descriptionInput" class="form-input form-textarea" placeholder="Describe the deed..." maxlength="2000" required></textarea>
+            <div class="char-counter">
+                <span id="charCount">0</span>/2000 characters
+            </div>
+        </div>
+
+        <!-- Image Upload -->
+        <div class="form-section">
+            <label class="form-label">UPLOAD IMAGE (OPTIONAL)</label>
+            <div class="image-upload-area" id="imageUploadArea">
+                <div>📸</div>
+                <div class="upload-text">Click to upload or drag & drop</div>
+                <div class="upload-hint">PNG, JPG, GIF, WEBP (Max 10MB)</div>
+                <input type="file" id="imageInput" style="display: none;" accept="image/*">
+            </div>
+            <div class="image-preview" id="imagePreview">
+                <img id="previewImg" alt="Preview">
+                <button type="button" class="btn btn-delete" onclick="clearImage()">Remove Image</button>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="button" class="btn btn-cancel" onclick="window.history.back()">Cancel</button>
+            <button type="submit" class="btn btn-submit" id="submitBtn" disabled>
+                <span>✨ CREATE DEED</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let currentUser = null;
+    let uploadedImage = null;
+    let selectedUserId = null;
+
+    // Initialize form on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadUsers();
+        setupFormHandlers();
+        checkFormValidity();
+    });
+
+    // Load users from API
+    function loadUsers() {
+        fetch('/api/users', {
+            method: 'GET',
+            credentials: 'include'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const userSelect = document.getElementById('userSelect');
+            
+            // Handle both paginated and non-paginated responses
+            const userList = data.users || data;
+            
+            if (Array.isArray(userList)) {
+                userList.forEach(user => {
+                    if (user.id && user.name) {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = user.name;
+                        userSelect.appendChild(option);
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading users:', error);
+            showAlert('Error loading users. Please refresh the page.', 'error');
+        });
+    }
+
+    // Setup form event handlers
+    function setupFormHandlers() {
+        const imageUploadArea = document.getElementById('imageUploadArea');
+        const imageInput = document.getElementById('imageInput');
+        const descriptionInput = document.getElementById('descriptionInput');
+        const userSelect = document.getElementById('userSelect');
+        const categorySelect = document.getElementById('categorySelect');
+
+        // User selection
+        userSelect.addEventListener('change', function() {
+            selectedUserId = this.value;
+            checkFormValidity();
+        });
+
+        // Category selection
+        categorySelect.addEventListener('change', checkFormValidity);
+
+        // Image upload click
+        imageUploadArea.addEventListener('click', () => imageInput.click());
+
+        // Drag and drop
+        imageUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            imageUploadArea.classList.add('dragging');
+        });
+
+        imageUploadArea.addEventListener('dragleave', () => {
+            imageUploadArea.classList.remove('dragging');
+        });
+
+        imageUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            imageUploadArea.classList.remove('dragging');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleImageFile(files[0]);
+            }
+        });
+
+        // File input change
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleImageFile(e.target.files[0]);
+            }
+        });
+
+        // Character counter
+        descriptionInput.addEventListener('input', function() {
+            const count = this.value.length;
+            document.getElementById('charCount').textContent = count;
+            
+            const counter = document.querySelector('.char-counter');
+            if (count > 1800) {
+                counter.classList.add('warning');
+            } else {
+                counter.classList.remove('warning');
+            }
+            checkFormValidity();
+        });
+
+        // Form submission
+        document.getElementById('createSubmissionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitDeed();
+        });
+    }
+
+    // Check form validity and enable/disable submit button
+    function checkFormValidity() {
+        const userSelect = document.getElementById('userSelect');
+        const categorySelect = document.getElementById('categorySelect');
+        const descriptionInput = document.getElementById('descriptionInput');
+        const submitBtn = document.getElementById('submitBtn');
+
+        const isValid = userSelect.value && categorySelect.value && descriptionInput.value.trim().length > 0;
+        submitBtn.disabled = !isValid;
+    }
+
+    // Handle image file upload
+    function handleImageFile(file) {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+
+        if (file.size > maxSize) {
+            showAlert('File size exceeds 10MB limit', 'error');
+            return;
+        }
+
+        const validTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+            showAlert('Invalid file type. Please upload PNG, JPG, GIF, or WEBP.', 'error');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            uploadedImage = e.target.result.split(',')[1];
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('imagePreview').style.display = 'block';
+        };
+        reader.onerror = function() {
+            showAlert('Error reading file', 'error');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Clear image
+    function clearImage() {
+        uploadedImage = null;
+        document.getElementById('imageInput').value = '';
+        document.getElementById('imagePreview').style.display = 'none';
+    }
+
+    // Show alert message
+    function showAlert(message, type) {
+        const alertElement = document.getElementById('alertMessage');
+        alertElement.textContent = message;
+        alertElement.className = `alert ${type}`;
+        
+        if (type === 'success') {
+            setTimeout(() => {
+                alertElement.classList.add('hidden');
+            }, 3000);
+        }
+    }
+
+    // Submit deed as admin
+    function submitDeed() {
+        if (!selectedUserId) {
+            showAlert('Please select a user', 'error');
+            return;
+        }
+
+        const category = document.getElementById('categorySelect').value;
+        if (!category) {
+            showAlert('Please select a category', 'error');
+            return;
+        }
+
+        const description = document.getElementById('descriptionInput').value.trim();
+        if (!description) {
+            showAlert('Please enter a description', 'error');
+            return;
+        }
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span>⏳ CREATING...</span>';
+
+        const payload = {
+            content: description,
+            category: category,
+            user_id: parseInt(selectedUserId)
+        };
+
+        if (uploadedImage) {
+            payload.image = uploadedImage;
+        }
+
+        // Use the /submit/create endpoint with admin context
+        fetch('/submit/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        })
+        .then(r => {
+            const contentType = r.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return r.json().then(data => ({ ok: r.ok, status: r.status, data: data }));
+            } else {
+                return r.text().then(text => ({ ok: r.ok, status: r.status, error: text }));
+            }
+        })
+        .then(result => {
+            if (result.ok && result.data && result.data.id) {
+                showAlert('✨ Deed created successfully!', 'success');
+                
+                // Reset form
+                document.getElementById('createSubmissionForm').reset();
+                document.getElementById('charCount').textContent = '0';
+                document.getElementById('imagePreview').style.display = 'none';
+                uploadedImage = null;
+                selectedUserId = null;
+                
+                setTimeout(() => {
+                    window.location.href = '/submissions/';
+                }, 1500);
+            } else {
+                const errorMsg = result.data?.message || result.error || 'Unknown error';
+                showAlert('Error: ' + errorMsg, 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            showAlert('Error creating deed: ' + error.message, 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        });
+    }
+
+    // Expose clearImage to global scope
+    window.clearImage = clearImage;
+</script>
+{% endblock %}

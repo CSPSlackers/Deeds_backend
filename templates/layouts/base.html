@@ -239,17 +239,17 @@ This HTML is setup as as a Jinja2 layout, coders use layouts for:
     {% if current_user.is_authenticated and request.endpoint != 'login' %}
     <aside class="sidebar">
         <div class="sidebar-brand">
-            <img src="{{ url_for('static', filename='assets/ncs_logo.png') }}" alt="Logo">
-            <a href="{{ url_for('index') }}">DEEDS</a>
+            <img src="{{ url_for('static', filename='assets/dad.png') }}" alt="Logo">
+            <a href="{{ url_for('index') }}">DAD</a>
         </div>
         <nav class="sidebar-menu">
             <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> <span>Home</span></a></li>
             <li><a href="{{ url_for('u2table') }}"><i class="fas fa-users"></i> <span>Users</span></a></li>
             <li><a href="{{ url_for('submissions_table') }}"><i class="fas fa-file-upload"></i> <span>Submissions</span></a></li>
             {% if current_user.is_admin() %}
+            <li><a href="{{ url_for('admin_create_submission') }}"><i class="fas fa-plus-circle"></i> <span>Create Deed</span></a></li>
             <li><a href="{{ url_for('carousel_editor') }}"><i class="fas fa-images"></i> <span>Carousel</span></a></li>
             {% endif %}
-            <li><a href="{{ url_for('persona') }}"><i class="fas fa-user-circle"></i> <span>Personas</span></a></li>
         </nav>
     </aside>
 

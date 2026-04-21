@@ -70,6 +70,67 @@ class UserAPI:
             return jsonify(user_data)
     
     class _BULK(Resource):  # Users API operation for Create, Read, Update, Delete 
+        @token_required()
+        def get(self):
+            """
+            Retrieve all users.
+
+            Retrieves a list of all users in the database.
+            
+            Query Parameters:
+                page (int): Page number for pagination (starts at 1)
+                per_page (int): Number of users per page (default: 50, max: 200)
+
+            Returns:
+                JSON response with a list of user dictionaries.
+            """
+            # retrieve the current user from the token_required authentication check  
+            current_user = g.current_user
+            
+            # Get query parameters for pagination
+            page = request.args.get('page', type=int)
+            per_page = min(request.args.get('per_page', 50, type=int), 200)
+            
+            """ User SQLAlchemy query returning list of all users """
+            if page:
+                # Paginated query
+                pagination = User.query.paginate(page=page, per_page=per_page, error_out=False)
+                users = pagination.items
+                has_next = pagination.has_next
+                has_prev = pagination.has_prev
+                total = pagination.total
+            else:
+                users = User.query.all() # extract all users from the database
+                has_next = False
+                has_prev = False
+                total = len(users)
+             
+            # prepare a json list of user dictionaries
+            json_ready = []  
+            for user in users:
+                user_data = user.read()
+                # Add access control
+                if current_user.role == 'Admin' or current_user.id == user.id:
+                    user_data['access'] = ['rw'] # read-write access control 
+                else:
+                    user_data['access'] = ['ro'] # read-only access control 
+                json_ready.append(user_data)
+            
+            # return response, a list of user dictionaries in JSON format
+            if page:
+                return jsonify({
+                    'users': json_ready,
+                    'pagination': {
+                        'page': page,
+                        'per_page': per_page,
+                        'total': total,
+                        'has_next': has_next,
+                        'has_prev': has_prev
+                    }
+                })
+            else:
+                return jsonify({'users': json_ready})
+
         def post(self):
             ''' Handle bulk user creation by sending POST requests to the single user endpoint '''
             users = request.get_json()

@@ -259,6 +259,15 @@ def carousel_editor():
         return redirect(url_for('index'))
     return render_template("carousel.html")
 
+@app.route('/submission/create/')
+@login_required
+def admin_create_submission():
+    """Admin page to create a submission on behalf of a user"""
+    # Check if user is admin
+    if current_user.role != 'Admin':
+        return redirect(url_for('index'))
+    return render_template("admin_create_submission.html")
+
 # Helper function to extract uploads for a user (ie PFP image)
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
@@ -272,6 +281,32 @@ def delete_user(user_id):
         user.delete()
         return jsonify({'message': 'User deleted successfully'}), 200
     return jsonify({'error': 'User not found'}), 404
+
+@app.route('/users/update/<int:user_id>', methods=['PUT'])
+@login_required
+def update_user_by_id(user_id):
+    if current_user.role != 'Admin' and current_user.id != user_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    data = request.get_json()
+    
+    try:
+        if 'name' in data:
+            user.name = data['name']
+        if 'email' in data:
+            user.email = data['email']
+        if 'role' in data and current_user.role == 'Admin':
+            user.role = data['role']
+        
+        db.session.commit()
+        return jsonify({'message': 'User updated successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/users/reset_password/<int:user_id>', methods=['POST'])
 @login_required
