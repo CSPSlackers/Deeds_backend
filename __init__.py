@@ -3,6 +3,7 @@ from flask_login import LoginManager
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 import os
 
@@ -13,6 +14,10 @@ load_dotenv()
 
 # Setup of key Flask object (app)
 app = Flask(__name__)
+
+# Trust headers from reverse proxy (nginx) for HTTPS detection
+# This allows Flask to correctly identify HTTPS requests even when behind a proxy
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
 # Configure Flask Port, default to 8328 which is same as Docker setup
 app.config['FLASK_PORT'] = int(os.environ.get('FLASK_PORT') or 8328)
