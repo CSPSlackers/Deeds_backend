@@ -207,10 +207,9 @@
                     <tr>
                         <th>ID</th>
                         <th>User</th>
-                        <th>Title</th>
+                        <th>Category</th>
                         <th>Status</th>
                         <th>Submitted Date</th>
-                        <th>Category</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -219,19 +218,17 @@
                         {% for submission in submissions %}
                         <tr id="submission-{{ submission.id }}">
                             <td>{{ submission.id }}</td>
-                            <td>{{ submission.user_name if submission.user_name else 'Unknown' }}</td>
-                            <td>{{ submission.title if submission.title else 'Untitled' }}</td>
+                            <td>{{ submission.user.name if submission.user and submission.user.name else 'Unknown' }}</td>
+                            <td>{{ submission.category if submission.category else 'General' }}</td>
                             <td>
                                 <span class="status-badge status-pending">
                                     Submitted
                                 </span>
                             </td>
                             <td>{{ submission.submitted_at.strftime('%m/%d/%Y %I:%M %p') if submission.submitted_at else 'N/A' }}</td>
-                            <td>{{ submission.category if submission.category else 'General' }}</td>
                             <td>
                                 <div class="btn-group">
                                     <button class="btn btn-view view-btn" data-id="{{ submission.id }}">View</button>
-                                    <button class="btn btn-edit edit-btn" data-id="{{ submission.id }}">Review</button>
                                     {% if current_user.role == 'Admin' %}
                                     <button class="btn btn-delete delete-btn" data-id="{{ submission.id }}">Delete</button>
                                     {% endif %}
@@ -241,7 +238,7 @@
                         {% endfor %}
                     {% else %}
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 2rem; color: #999;">
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: #999;">
                             No submissions found.
                         </td>
                     </tr>
@@ -250,68 +247,107 @@
             </table>
         </div>
     </div>
-{% endblock %}
 
-<script>
-    // Configure jQuery AJAX to include credentials (cookies) for session auth
-    $.ajaxSetup({
-        xhrFields: {
-            withCredentials: true
-        }
-    });
-
-    // View button handler - works with event delegation
-    $(document).on('click', 'button.view-btn', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const submissionId = $(this).attr('data-id');
-        const row = $('#submission-' + submissionId);
-        const user = row.find('td').eq(1).text();
-        const title = row.find('td').eq(2).text();
-        const category = row.find('td').eq(5).text();
+    <script>
+        console.log("=== Submissions Table Script Loading ===");
+        console.log("jQuery version:", typeof jQuery !== 'undefined' ? jQuery.fn.jquery : 'NOT LOADED');
         
-        const modal = $('<div class="viewModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center;"><div style="background:white; border-radius:12px; padding:2rem; max-width:500px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.3);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;"><h2 style="margin:0; color:var(--dark-text);">Submission #' + submissionId + '</h2><button class="modal-close" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">×</button></div><p><strong>User:</strong> ' + user + '</p><p><strong>Title:</strong> ' + title + '</p><p><strong>Category:</strong> ' + category + '</p><div style="margin-top:2rem; text-align:right;"><button class="modal-close" style="padding:0.6rem 1.2rem; background:var(--soft-red); color:white; border:none; border-radius:6px; cursor:pointer;">Close</button></div></div></div>');
-        $('body').append(modal);
-        
-        modal.on('click', '.modal-close', function() {
-            modal.remove();
+        // Configure jQuery AJAX to include credentials (cookies) for session auth
+        $.ajaxSetup({
+            xhrFields: {
+                withCredentials: true
+            }
         });
-        modal.on('click', function(e) {
-            if(e.target === this) modal.remove();
-        });
-    });
 
-    // Review button handler
-    $(document).on('click', 'button.edit-btn', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const submissionId = $(this).attr('data-id');
-        alert('Review functionality for submission #' + submissionId + ' - Feature in development');
-    });
-
-    // Delete button handler
-    $(document).on('click', 'button.delete-btn', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const submissionId = $(this).attr('data-id');
-        if(confirm('Are you sure you want to delete this submission?')) {
+        // Attach event handlers to document (will work with dynamically added elements)
+        $(document).on('click', 'button.view-btn', function(e) {
+            e.preventDefault();
+            console.log("=== VIEW BUTTON CLICKED ===");
+            const submissionId = $(this).data('id');
+            console.log("Submission ID:", submissionId);
+            
+            // Fetch full submission data including image and content
             $.ajax({
-                url: '/submit/delete/' + submissionId,
-                type: 'DELETE',
+                url: '/submit/submission/' + submissionId,
+                type: 'GET',
                 success: function(data) {
-                    $('#submission-' + submissionId).fadeOut(function() { $(this).remove(); });
-                    alert('Submission deleted successfully');
+                    console.log("Submission data:", data);
+                    const user = data.user_name || 'Unknown';
+                    const category = data.category || 'General';
+                    const date = data.submitted_at ? new Date(data.submitted_at).toLocaleString() : 'N/A';
+                    const description = data.content || 'No description provided';
+                    const image = data.image ? 'data:image/jpeg;base64,' + data.image : null;
+                    
+                    let imageHtml = '';
+                    if(image) {
+                        imageHtml = '<div style="margin:1rem 0; text-align:center;"><img src="' + image + '" style="max-width:100%; max-height:300px; border-radius:8px; object-fit:cover;"></div>';
+                    }
+                    
+                    const modal = $('<div class="viewModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center;"><div style="background:white; border-radius:12px; padding:2rem; max-width:600px; width:90%; max-height:90vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,0.3);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;"><h2 style="margin:0; color:var(--dark-text);">Submission #' + submissionId + '</h2><button class="modal-close" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">×</button></div><p><strong>User:</strong> ' + user + '</p><p><strong>Category:</strong> ' + category + '</p><p><strong>Date:</strong> ' + date + '</p>' + imageHtml + '<div style="margin:1rem 0;"><strong>Description:</strong><p style="background:#f5f1ee; padding:1rem; border-radius:6px; margin-top:0.5rem;">' + description.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</p></div><div style="margin-top:2rem; text-align:right;"><button class="modal-close" style="padding:0.6rem 1.2rem; background:var(--soft-red); color:white; border:none; border-radius:6px; cursor:pointer;">Close</button></div></div></div>');
+                    $('body').append(modal);
+                    
+                    modal.on('click', '.modal-close', function() {
+                        modal.remove();
+                    });
+                    modal.on('click', function(e) {
+                        if(e.target === this) modal.remove();
+                    });
                 },
                 error: function(xhr) {
-                    alert('Error deleting submission: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                    console.log("Error fetching submission:", xhr.status);
+                    alert('Error loading submission details');
                 }
             });
-        }
-    });
+        });
 
-    $(document).ready(function () {
-        // Initialize DataTables
-        const table = $("#submissionsTable").DataTable();
-        table.page.len(-1).draw();
-    });
-</script>
+        // Delete button handler
+        $(document).on('click', 'button.delete-btn', function(e) {
+            e.preventDefault();
+            console.log("=== DELETE BUTTON CLICKED ===");
+            const submissionId = $(this).data('id');
+            console.log("Delete submission ID:", submissionId);
+            if(confirm('Are you sure you want to delete this submission?')) {
+                $.ajax({
+                    url: '/submit/delete/' + submissionId,
+                    type: 'DELETE',
+                    success: function(data) {
+                        console.log("Delete successful");
+                        $('tr#submission-' + submissionId).fadeOut(function() { $(this).remove(); });
+                        alert('Submission deleted successfully');
+                    },
+                    error: function(xhr) {
+                        console.log("Delete error:", xhr.status, xhr.responseText);
+                        alert('Error deleting submission: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                    }
+                });
+            }
+        });
+
+        $(document).ready(function () {
+            console.log("Document ready");
+            
+            // Check if table is empty (first row has colspan = no submissions message)
+            const firstRow = $("#submissionsTable tbody tr").first();
+            const hasColspan = firstRow.find('td[colspan]').length > 0;
+            console.log("Table has colspan (empty):", hasColspan);
+            
+            if(!hasColspan) {
+                console.log("Initializing DataTables with submission data");
+                try {
+                    const table = $("#submissionsTable").DataTable({
+                        "paging": false,
+                        "ordering": true,
+                        "info": false
+                    });
+                    console.log("DataTables initialized successfully");
+                } catch(err) {
+                    console.error("DataTables initialization error:", err);
+                }
+            } else {
+                console.log("Table is empty, skipping DataTables initialization");
+            }
+        });
+        
+        console.log("=== Script Initialization Complete ===");
+    </script>
+{% endblock %}

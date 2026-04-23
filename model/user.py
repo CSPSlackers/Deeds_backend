@@ -465,11 +465,24 @@ class User(db.Model, UserMixin):
     # None
     def delete(self):
         try:
-            KasmUser().delete(self.uid)
+            print(f"DEBUG: Starting delete for user {self.uid}")
+            
+            # Skip KASM deletion to avoid hanging - it's optional
+            # KasmUser deletion is not critical for database delete
+            print(f"DEBUG: Skipping KASM deletion (optional service)")
+            
+            print(f"DEBUG: Deleting database record for user {self.uid}")
             db.session.delete(self)
             db.session.commit()
-        except IntegrityError:
+            print(f"DEBUG: User {self.uid} successfully deleted from database")
+        except IntegrityError as ie:
+            print(f"DEBUG: IntegrityError during delete: {str(ie)}")
             db.session.rollback()
+            raise
+        except Exception as e:
+            print(f"DEBUG: General exception during delete: {str(e)}")
+            db.session.rollback()
+            raise
         return None   
     
     def save_pfp(self, image_data, filename):

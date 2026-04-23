@@ -276,10 +276,30 @@ def uploaded_file(filename):
 @app.route('/users/delete/<int:user_id>', methods=['DELETE'])
 @login_required
 def delete_user(user_id):
+    print(f"DEBUG: Delete request for user_id={user_id}")
+    print(f"DEBUG: Current user: {current_user.id}, role: {current_user.role}")
+    
+    # Only admins can delete users
+    if current_user.role != 'Admin':
+        print(f"DEBUG: Permission denied - user is not admin")
+        return jsonify({'error': 'Unauthorized. Only admins can delete users.'}), 403
+    
     user = User.query.get(user_id)
+    print(f"DEBUG: Query result for user_id {user_id}: {user}")
+    
     if user:
-        user.delete()
-        return jsonify({'message': 'User deleted successfully'}), 200
+        print(f"DEBUG: Found user {user.name} (id={user.id}), deleting...")
+        try:
+            user.delete()
+            print(f"DEBUG: Successfully deleted user {user_id}")
+            return jsonify({'message': 'User deleted successfully'}), 200
+        except Exception as e:
+            print(f"DEBUG: Error during delete: {type(e).__name__}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Error deleting user: {str(e)}'}), 500
+    
+    print(f"DEBUG: User not found for id={user_id}")
     return jsonify({'error': 'User not found'}), 404
 
 @app.route('/users/update/<int:user_id>', methods=['PUT'])
