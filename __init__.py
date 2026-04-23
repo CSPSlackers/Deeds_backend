@@ -104,11 +104,13 @@ if is_production:
     app.config['SESSION_COOKIE_SAMESITE'] = 'None'
     app.config['SESSION_COOKIE_SECURE'] = True  # Required for SameSite=None on HTTPS
     app.config['SESSION_COOKIE_DOMAIN'] = '.opencodingsociety.com'  # Allow all subdomains
+    app.config['PREFERRED_URL_SCHEME'] = 'https'  # Force HTTPS for url_for()
 else:
     # Development: HTTP, relaxed cookie settings for localhost
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['SESSION_COOKIE_SECURE'] = False  # HTTP on localhost
     app.config['SESSION_COOKIE_DOMAIN'] = None  # Allow localhost
+    app.config['PREFERRED_URL_SCHEME'] = 'http'  # Use HTTP for url_for()
 
 app.config['JWT_TOKEN_NAME'] = JWT_TOKEN_NAME
 

@@ -117,6 +117,16 @@ server {
         
         # Preserve original domain: dad.opencodingsociety.com
         proxy_set_header Host $host;
+        
+        # CRITICAL: Headers for ProxyFix to detect HTTPS and original client IP
+        # These tell Flask the original request was HTTPS (not the internal HTTP to 8328)
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host $server_name;
+        proxy_set_header X-Forwarded-Port $server_port;
+        
+        # Preserve real client IP for logging and rate limiting
+        proxy_set_header X-Real-IP $remote_addr;
 
         # ==============================================================================
         # THE COMPLETE REQUEST/RESPONSE STORY
